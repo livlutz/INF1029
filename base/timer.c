@@ -1,3 +1,6 @@
+/*Lívia Lutz dos Santos - 2211055
+Ana Luiza Pinto Marques*/
+
 #include "timer.h"
 
 /*
