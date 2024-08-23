@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "matrix_lib.h": "c"
+        "matrix_lib.h": "c",
+        "stdlib.h": "c",
+        "stdio.h": "c"
     }
 }

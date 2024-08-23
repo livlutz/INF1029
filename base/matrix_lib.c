@@ -1,5 +1,5 @@
 /*Lívia Lutz dos Santos - 2211055
-Ana Luiza Pinto Marques*/
+Ana Luiza Pinto Marques - 2211960*/
 
 #include "matrix_lib.h"
 #include "timer.h"
@@ -39,7 +39,8 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     o numero de colunas da primeira matrix tem q ser igual ao numero de linhas da segunda matrix
     a matriz resultante tem que ter o numero de linhas da primeira matriz e o numero de colunas da segunda matriz*/
 
-    if((matrixA == NULL || matrixB == NULL || matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->rows != matrixA->rows) || (matrixC->width != matrixB->width) ){
+    if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
+        printf("Erro de dimensao ou alocacao\n");
         return 0;
     }
 
@@ -49,8 +50,8 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
 
     for(int i = 0; i < matrixA->height;i++){
         for (int j = 0; j < matrixB->width;j++){
-            for(int h = 0; h < matrixB->height;h++){
-                soma += matrixA->rows[i * matrixA->height + h] * matrixB->rows[h * matrixA->height + j];
+            for(int h = 0; h <= matrixB->height;h++){
+                soma += matrixA->rows[i * matrixA->height + h] * matrixB->rows[h * matrixB->height + j];
             }
             matrixC->rows[i * matrixA->height + j] = soma;
             soma = 0;
