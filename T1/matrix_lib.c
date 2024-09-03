@@ -22,7 +22,7 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
         for(int j = 0; j < matrix->width;j++){
             /*calcula o multiplo de 8 da posicao do elemento da matrix no array de rows 
             e multiplica pelo escalar*/
-            matrix->rows[i * matrix->height + j] *= scalar_value;
+            matrix->rows[i * matrix->width + j] *= scalar_value;
         }
     }
 
@@ -38,6 +38,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     /*se o ponteiro de alguma matrix for nulo (matrix nao existe), retorna erro
     o numero de colunas da primeira matrix tem q ser igual ao numero de linhas da segunda matrix
     a matriz resultante tem que ter o numero de linhas da primeira matriz e o numero de colunas da segunda matriz*/
+    int cont = 0;
 
     if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
         printf("Erro de dimensao ou alocacao\n");
@@ -46,11 +47,27 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
 
     for(int i = 0; i < matrixA->height; i++){
         for(int j = 0; j < matrixB->height;j++){
+            //inicializar cada linha de C com 0
+            matrixC->rows[i * matrixA->height + j] = 0;
+            
             //tá faltando o índice de C para usar o acumulador 
-            matrixC->rows[] += matrixA->rows[i] * matrixB->rows[j*matrixB->height]
+         
+            matrixC->rows[i * matrixA->height + j] += matrixA->rows[i] * matrixB->rows[j*matrixB->height];
         }
+
+        cont = 0;
+
     }
 
     return 1;
 
 }
+
+// [1 2 3 4 5 6 7] [8 9 10 11 12]
+
+/* [1 2  -> [1 2 3 4] ou [1 3 2 4]
+    3 4]
+    */
+
+/* C [0] = [A[i] * B[j * height]]
+    C[1] = [A[i] * B[j * height]*/

@@ -1,0 +1,37 @@
+/*Lívia Lutz dos Santos - 2211055
+Ana Luiza Pinto Marques - 2211960*/
+
+#include "matrix_lib.h"
+
+int main(void){
+    float *rowsA, *rowsB;
+    FILE *matrixA, *matrixB;
+
+    matrixA = fopen("floats_256_2.0f.dat", "wb");
+    matrixB = fopen("floats_256_5.0f.dat", "wb");
+
+    rowsA = (float*)malloc(128*sizeof(float));
+    rowsB = (float*)malloc(128*sizeof(float));
+
+    if(rowsA == NULL || rowsB == NULL){
+        printf("Erro ao alocar memoria\n");
+        return 1;
+    }
+
+    for(int i = 0; i < 128;i++){
+        rowsA[i] = 2.0;
+        rowsB[i] = 5.0;
+    }
+
+    fwrite(rowsA, sizeof(float), 128, matrixA);
+    fwrite(rowsB, sizeof(float), 128, matrixB);
+    
+    fclose(matrixA);
+    fclose(matrixB);
+
+    free(rowsA);
+    free(rowsB);
+
+    return 0;
+}
+
