@@ -55,10 +55,13 @@ int initialize_matrix(struct matrix *matrix, float value, float inc) {
     return 1;
 }
 
-// deixar de printar quando tiver mais de 256 elementos na tela
 int print_matrix(struct matrix *matrix) {
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
+	    if((i * matrix->height + j) > 256){
+		    printf("Ooops...256 printing limit found...skipping printing...\n");
+		    break;
+	    }	
             printf("%f ", matrix->rows[i * matrix->height + j]);
         }
         printf("\n");
@@ -192,7 +195,7 @@ int main(int argc, char *argv[]) {
   // Show elapsed overall time
   printf("Overall time: %f ms\n", timedifference_msec(overall_t1, overall_t2));
 
-  // Show processor used!!
+  // Show processor used!! - type lscpu on the terminal
 
   return 0;
 }
