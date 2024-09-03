@@ -55,6 +55,7 @@ int initialize_matrix(struct matrix *matrix, float value, float inc) {
     return 1;
 }
 
+// deixar de printar quando tiver mais de 256 elementos na tela
 int print_matrix(struct matrix *matrix) {
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
@@ -177,7 +178,7 @@ int main(int argc, char *argv[]) {
   /* Check foor errors */
   printf("Checking matrixC for errors...\n");
   gettimeofday(&start, NULL);
-  check_errors(&matrixC, 10240.0f);
+  check_errors(&matrixC, 800.0f);
   gettimeofday(&stop, NULL);
   printf("%f ms\n", timedifference_msec(start, stop));
 
@@ -190,6 +191,8 @@ int main(int argc, char *argv[]) {
 
   // Show elapsed overall time
   printf("Overall time: %f ms\n", timedifference_msec(overall_t1, overall_t2));
+
+  // Show processor used!!
 
   return 0;
 }
