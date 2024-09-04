@@ -60,12 +60,3 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     return 1;
 
 }
-
-// [1 2 3 4 5 6 7] [8 9 10 11 12]
-
-/* [1 2  -> [1 2 3 4] ou [1 3 2 4]
-    3 4]
-    */
-
-/* C [0] = [A[i] * B[j * height]]
-    C[1] = [A[i] * B[j * height]*/
