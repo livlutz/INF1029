@@ -10,21 +10,21 @@ int main(void){
     matrixA = fopen("floats_256_2.0f.dat", "wb");
     matrixB = fopen("floats_256_5.0f.dat", "wb");
 
-    rowsA = (float*)malloc((2048* 2048)*sizeof(float));
-    rowsB = (float*)malloc((2048* 2048)*sizeof(float));
+    rowsA = (float*)malloc((1024 * 1024)*sizeof(float));
+    rowsB = (float*)malloc((1024 * 1024)*sizeof(float));
 
     if(rowsA == NULL || rowsB == NULL){
         printf("Erro ao alocar memoria\n");
         return 1;
     }
 
-    for(int i = 0; i < (2048* 2048);i++){
+    for(int i = 0; i < (1024* 1024);i++){
         rowsA[i] = 2.0;
         rowsB[i] = 5.0;
     }
 
-    fwrite(rowsA, sizeof(float), (2048* 2048), matrixA);
-    fwrite(rowsB, sizeof(float), (2048* 2048), matrixB);
+    fwrite(rowsA, sizeof(float), (1024 * 1024), matrixA);
+    fwrite(rowsB, sizeof(float), (1024 * 1024), matrixB);
     
     fclose(matrixA);
     fclose(matrixB);
@@ -36,3 +36,4 @@ int main(void){
 }
 
 //matrix_lib_test 5.0 1024 1024 1024 1024 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat
+

@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
   /* Check foor errors */
   printf("Checking matrixC for errors...\n");
   gettimeofday(&start, NULL);
-  if (check_errors(&matrixC, 102400.0f) == 1){
+  if (check_errors(&matrixC, 51200.0f) == 1){
     printf("No errors found\n");
   };
   gettimeofday(&stop, NULL);
