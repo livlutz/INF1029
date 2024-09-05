@@ -39,7 +39,6 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     o numero de colunas da primeira matrix tem q ser igual ao numero de linhas da segunda matrix
     a matriz resultante tem que ter o numero de linhas da primeira matriz e o numero de colunas da segunda matriz*/
 
-
     if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
         printf("Erro de dimensao ou alocacao\n");
         return 0;
@@ -47,9 +46,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
 
     for(int i = 0; i < matrixA->height; i++){
         for(int j = 0; j < matrixB->height;j++){
-
             for (int k = 0; k < matrixB->width; k++){
-                
                 //multiplica cada elemento da linha de A pelo elemento da coluna de B
                 matrixC->rows[i * matrixA->height + k] += matrixA->rows[i * matrixA->width + j] * matrixB->rows[j * matrixB->width + k];
             }

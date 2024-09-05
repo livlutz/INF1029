@@ -63,7 +63,7 @@ int print_matrix(struct matrix *matrix) {
         for(int j = 0; j < matrix->width; j++){
 	    if((i * matrix->height + j) > 256){
 		    printf("Ooops...256 printing limit found...skipping printing...\n");
-		    break;
+		    return 1;
 	    }	
             printf("%f ", matrix->rows[i * matrix->height + j]);
         }
@@ -77,7 +77,7 @@ int check_errors(struct matrix *matrix, float scalar_value) {
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
             if(matrix->rows[i * matrix->height + j] != scalar_value){
-                printf("Matrix error\n");
+                printf("Matrix error\nExpecte value : %f\nReceived value:%f\n", scalar_value, matrix->rows[i * matrix->height + j]);
                 return 0;
             }
         }
@@ -103,7 +103,6 @@ int main(int argc, char *argv[]) {
   }
 
   // Convert arguments
-
   scalar_value = strtof(argv[1], &eptr);
   matrixA.height = strtol(argv[2], &eptr, 10);
   matrixA.width = strtol(argv[3], &eptr, 10);
@@ -111,7 +110,6 @@ int main(int argc, char *argv[]) {
   matrixB.width = strtol(argv[5], &eptr, 10);
   matrixC.height = matrixA.height;
   matrixC.width = matrixB.width;
-  
 
   result1_filename = argv[8];
   result2_filename = argv[9];
@@ -161,7 +159,7 @@ int main(int argc, char *argv[]) {
   }
 
   /* Calculate the product between matrix A and matrix B */
-  printf("Executing matrix_matrix_mult(matrixA, mattrixB, matrixC)...\n");
+  printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
   gettimeofday(&start, NULL);
   if (!matrix_matrix_mult(&matrixA, &matrixB, &matrixC)) {
 	printf("%s: matrix_matrix_mult problem.", argv[0]);
@@ -184,7 +182,9 @@ int main(int argc, char *argv[]) {
   /* Check foor errors */
   printf("Checking matrixC for errors...\n");
   gettimeofday(&start, NULL);
-  check_errors(&matrixC, 800.0f);
+  if (check_errors(&matrixC, 102400.0f) == 1){
+    printf("No errors found\n");
+  };
   gettimeofday(&stop, NULL);
   printf("%f ms\n", timedifference_msec(start, stop));
 

@@ -1,0 +1,11 @@
+Lívia Lutz dos Santos - 2211055
+Ana Luiza Pinto Marques - 2211960
+
+Saída do programa :
+
+Matriz de 1024 x 1024 :
+
+
+Matriz de 2028 x 2048 :
+
+Saída do comando lscpu : 
