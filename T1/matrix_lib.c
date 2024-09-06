@@ -44,7 +44,6 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
-    int cont = 0;
     for(int i = 0; i < matrixA->height; i++){
         for(int j = 0; j < matrixB->height;j++){
             for (int k = 0; k < matrixB->width; k++){

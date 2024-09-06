@@ -61,10 +61,10 @@ int initialize_matrix(struct matrix *matrix, float value, float inc) {
 int print_matrix(struct matrix *matrix) {
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
-	    if((i * matrix->height + j) > 256){
-		    printf("Ooops...256 printing limit found...skipping printing...\n");
-		    return 1;
-	    }	
+	        if((i * matrix->height + j) > 256){
+		        printf("Ooops...256 printing limit found...skipping printing...\n");
+		        return 1;
+	        }	
             printf("%f ", matrix->rows[i * matrix->height + j]);
         }
         printf("\n");
@@ -77,7 +77,7 @@ int check_errors(struct matrix *matrix, float scalar_value) {
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
             if(matrix->rows[i * matrix->height + j] != scalar_value){
-                printf("Matrix error\nExpecte value : %f\nReceived value:%f\n", scalar_value, matrix->rows[i * matrix->height + j]);
+                printf("Matrix error\nExpected value : %f\nReceived value:%f\n", scalar_value, matrix->rows[i * matrix->height + j]);
                 return 0;
             }
         }
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
   /* Check foor errors */
   printf("Checking matrixC for errors...\n");
   gettimeofday(&start, NULL);
-  if (check_errors(&matrixC, 51200.0f) == 1){
+  if (check_errors(&matrixC, 102400.0f) == 1){
     printf("No errors found\n");
   };
   gettimeofday(&stop, NULL);
