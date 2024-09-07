@@ -50,10 +50,10 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
 
     for(int i = 0; i < matrixA->height;i++){
         for (int j = 0; j < matrixB->width;j++){
-            for(int h = 0; h <= matrixB->height;h++){
+            for(int h = 0; h < matrixB->height;h++){
                 soma += matrixA->rows[i * matrixA->height + h] * matrixB->rows[h * matrixB->height + j];
             }
-            matrixC->rows[i * matrixA->height + j] = soma;
+            matrixC->rows[i * matrixC->height + j] = soma;
             soma = 0;
         }
     }

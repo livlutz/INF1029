@@ -103,8 +103,12 @@ int main(int argc, char *argv[]){
     // Mark matrix stop time
     gettimeofday(&stop, NULL);
 
+    for (int i = 0; i < 10; i++){
+        printf("%.f ", matrixC.rows[i]);
+    }
+
     // Show matrix exec time
-    printf("Matrix matrix multiplication time: %f ms\n", timedifference_msec(start, stop));
+    printf("\nMatrix matrix multiplication time: %f ms\n", timedifference_msec(start, stop));
     
     //verifica se a multiplicacao foi feita corretamente
     if(retorno_scalar == 0){
