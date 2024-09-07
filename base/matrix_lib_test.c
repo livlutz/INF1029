@@ -92,6 +92,9 @@ int main(int argc, char *argv[]){
     // Mark scalar stop time
     gettimeofday(&stop, NULL);
 
+    // Show scalar exec time
+    printf("Scalar matrix multiplication time: %f ms\n", timedifference_msec(start, stop));
+
     // Mark matrix start time
     gettimeofday(&start, NULL);
 
