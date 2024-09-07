@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
   matrixB.rows = (float*) malloc( (matrixB.height * matrixB.width) * sizeof(float));
   matrixC.rows = (float*) malloc( (matrixA.height * matrixB.width) * sizeof(float));
 
-  //verifica se a matriz foi alocada corretamente
+  /*Checks allocations*/
   if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
       printf("Erro ao alocar memoria\n");
       return 0;
@@ -130,6 +130,7 @@ int main(int argc, char *argv[]) {
   carregaA = load_matrix(&matrixA, argv[6]);
   carregaB = load_matrix(&matrixB, argv[7]);
 
+  /*Checks if matrixes were loaded correctly */
   if(carregaA == 0 || carregaB == 0){
       printf("Erro ao carregar as matrizes\n");
       return 0;
@@ -182,6 +183,7 @@ int main(int argc, char *argv[]) {
   /* Check foor errors */
   printf("Checking matrixC for errors...\n");
   gettimeofday(&start, NULL);
+  /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
   if (check_errors(&matrixC, 102400.0f) == 1){
     printf("No errors found\n");
   };
@@ -197,8 +199,6 @@ int main(int argc, char *argv[]) {
 
   // Show elapsed overall time
   printf("Overall time: %f ms\n", timedifference_msec(overall_t1, overall_t2));
-
-  // Show processor used!! - type lscpu on the terminal
 
   return 0;
 }
