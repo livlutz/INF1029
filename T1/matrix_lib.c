@@ -38,18 +38,39 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     /*se o ponteiro de alguma matrix for nulo (matrix nao existe), retorna erro
     o numero de colunas da primeira matrix tem q ser igual ao numero de linhas da segunda matrix
     a matriz resultante tem que ter o numero de linhas da primeira matriz e o numero de colunas da segunda matriz*/
+    
+    int indexA, indexB, indexC;
+    float valA;
+    float *rowC, *rowB;
 
     if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
         printf("Erro de dimensao ou alocacao\n");
         return 0;
     }
 
+    //itera por linhas da matriz C
     for(int i = 0; i < matrixC->height; i++){
-        //calcular posicao inicial dos indices das matrizes A, B e C aqui e depois incrementar o valor dentro do loop
+        //Calcula posicao inicial dos indices das matrizes A e C aqui e depois incrementa o valor dentro do loop
+        indexA = i * matrixA->width;
+        indexC = i * matrixC->width;
+        // Ponteiro direto para a linha i da matriz C
+        rowC = &matrixC->rows[indexC];
+
+        //itera por colunas da matriz A
         for(int j = 0; j < matrixA->width;j++){
+            //Calcula posicao inicial dos indices da matriz B e depois incrementa o valor dentro do loop
+            indexB = j * matrixB->width;
+
+            //valor do elemento da matriz A
+            valA = matrixA->rows[indexA + j];
+
+            // Ponteiro direto para a linha j da matriz B
+            rowB = &matrixB->rows[indexB];
+
+            //itera por colunas da matriz B
             for (int k = 0; k < matrixB->width; k++){
                 //multiplica cada elemento da linha de A pelo elemento da coluna de B
-                matrixC->rows[i * matrixC->width + k] += matrixA->rows[i * matrixA->width + j] * matrixB->rows[j * matrixB->width + k];
+                rowC[k] += valA * rowB[k];
             }
         }
     }
