@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
   printf("Checking matrixC for errors...\n");
   gettimeofday(&start, NULL);
   /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
-  if (check_errors(&matrixC, 102400.0f) == 1){
+  if (check_errors(&matrixC, 51200.0f) == 1){
     printf("No errors found\n");
   };
   gettimeofday(&stop, NULL);
