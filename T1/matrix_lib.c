@@ -44,11 +44,12 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
-    for(int i = 0; i < matrixA->height; i++){
-        for(int j = 0; j < matrixB->height;j++){
+    for(int i = 0; i < matrixC->height; i++){
+        //calcular posicao inicial dos indices das matrizes A, B e C aqui e depois incrementar o valor dentro do loop
+        for(int j = 0; j < matrixA->width;j++){
             for (int k = 0; k < matrixB->width; k++){
                 //multiplica cada elemento da linha de A pelo elemento da coluna de B
-                matrixC->rows[i * matrixA->height + k] += matrixA->rows[i * matrixA->width + j] * matrixB->rows[j * matrixB->width + k];
+                matrixC->rows[i * matrixC->width + k] += matrixA->rows[i * matrixA->width + j] * matrixB->rows[j * matrixB->width + k];
             }
         }
     }
