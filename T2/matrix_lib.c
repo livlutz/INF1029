@@ -16,15 +16,17 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
         return 0;
     }
 
-    //itera por linhas da matriz
+    /*itera por linhas da matriz
     for(int i = 0; i < matrix->height;i++){
         //itera por colunas da matriz
         for(int j = 0; j < matrix->width;j++){
             /*calcula o multiplo de 8 da posicao do elemento da matrix no array de rows 
             e multiplica pelo escalar*/
-            matrix->rows[i * matrix->width + j] *= scalar_value;
+            /*matrix->rows[i * matrix->width + j] *= scalar_value;
         }
-    }
+    }*/
+
+   // Usar instruções AVX para multiplicar todos os elementos da matriz por um escalar
 
     return 1;
 }
@@ -39,9 +41,9 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     o numero de colunas da primeira matrix tem q ser igual ao numero de linhas da segunda matrix
     a matriz resultante tem que ter o numero de linhas da primeira matriz e o numero de colunas da segunda matriz*/
     
-    int indexA, indexB, indexC;
+    /*int indexA, indexB, indexC;
     float valA;
-    float *rowC, *rowB;
+    float *rowC, *rowB;*/
 
     if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
         printf("Erro de dimensao ou alocacao\n");
@@ -49,7 +51,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     }
 
     //itera por linhas da matriz C
-    for(int i = 0; i < matrixC->height; i++){
+    /*for(int i = 0; i < matrixC->height; i++){
         //Calcula posicao inicial dos indices das matrizes A e C aqui e depois incrementa o valor dentro do loop
         indexA = i * matrixA->width;
         indexC = i * matrixC->width;
@@ -73,7 +75,9 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
                 rowC[k] += valA * rowB[k];
             }
         }
-    }
+    }*/
+
+   // Usar instruções AVX para multiplicar duas matrizes
 
     return 1;
 
