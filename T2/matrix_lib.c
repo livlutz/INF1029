@@ -74,35 +74,3 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
 
     return 1;
 }
-
-/*void matrix_multiply_avx(Matrix *matrixA, Matrix *matrixB, Matrix *matrixC) {
-    int M = matrixA->height;
-    int N = matrixA->width;  // same as matrixB->height
-    int P = matrixB->width;
-
-    for (int i = 0; i < M; i++) {
-        for (int j = 0; j < P; j++) {
-            __m256 result = _mm256_setzero_ps();  // Initialize result vector
-
-            for (int k = 0; k < N; k += 8) {
-                // Load 8 floats from row of matrix A
-                __m256 rowA = _mm256_load_ps(&matrixA->rows[i * N + k]);
-
-                // Load 8 floats from column of matrix B
-                __m256 colB = _mm256_load_ps(&matrixB->rows[k * P + j]);
-
-                // Perform multiplication and accumulate the result
-                result = _mm256_fmadd_ps(rowA, colB, result);
-            }
-
-            // Sum the elements of the AVX result and store in matrixC
-            float sum[8];
-            _mm256_store_ps(sum, result);
-
-            // Accumulate the results into matrixC
-            matrixC->rows[i * P + j] = sum[0] + sum[1] + sum[2] + sum[3] +
-                                       sum[4] + sum[5] + sum[6] + sum[7];
-        }
-    }
-}
-*/
