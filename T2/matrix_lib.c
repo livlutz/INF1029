@@ -42,13 +42,67 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
-   for(int i = 0; i < matrixC->height * matrixC->width; i += 8){
-        __m256 rowC = _mm256_load_ps(&matrixC->rows[i]);
-        __m256 rowA = _mm256_load_ps(&matrixA->rows[i]);
-        __m256 rowB = _mm256_load_ps(&matrixB->rows[i]);
-        __m256 result = _mm256_fmadd_ps(rowA,rowB,rowC);
-        _mm256_store_ps(&matrixC->rows[i],result);
-   }
+
+   int indexA, indexB, indexC;
+
+    for(int i = 0; i < matrixC->height; i++){
+        //Calcula posicao inicial dos indices das matrizes A e C aqui e depois incrementa o valor dentro do loop
+        indexA = i * matrixA->width;
+        indexC = i * matrixC->width;
+        // Ponteiro direto para a linha i da matriz C
+        __m256 rowC = _mm256_load_ps(&matrixC->rows[indexC]);
+
+        //itera por colunas da matriz A
+        for(int j = 0; j < matrixA->width;j++){
+            //Calcula posicao inicial dos indices da matriz B e depois incrementa o valor dentro do loop
+            indexB = j * matrixB->width;
+
+            //valor do elemento da matriz A
+            __m256 valA = _mm256_set1_ps(matrixA->rows[indexA + j]);
+
+            // Ponteiro direto para a linha j da matriz B
+            __m256 rowB = _mm256_load_ps(&matrixB->rows[indexB]);
+
+            //itera por colunas da matriz B
+            for (int k = 0; k < matrixB->width; k++){
+                //multiplica cada elemento da linha de A pelo elemento da coluna de B
+                __m256 result = _mm256_fmadd_ps(rowB,valA,rowC);
+                _mm256_store_ps(&matrixC->rows[indexC],result);
+            }
+        }
+    }
 
     return 1;
 }
+
+/*void matrix_multiply_avx(Matrix *matrixA, Matrix *matrixB, Matrix *matrixC) {
+    int M = matrixA->height;
+    int N = matrixA->width;  // same as matrixB->height
+    int P = matrixB->width;
+
+    for (int i = 0; i < M; i++) {
+        for (int j = 0; j < P; j++) {
+            __m256 result = _mm256_setzero_ps();  // Initialize result vector
+
+            for (int k = 0; k < N; k += 8) {
+                // Load 8 floats from row of matrix A
+                __m256 rowA = _mm256_load_ps(&matrixA->rows[i * N + k]);
+
+                // Load 8 floats from column of matrix B
+                __m256 colB = _mm256_load_ps(&matrixB->rows[k * P + j]);
+
+                // Perform multiplication and accumulate the result
+                result = _mm256_fmadd_ps(rowA, colB, result);
+            }
+
+            // Sum the elements of the AVX result and store in matrixC
+            float sum[8];
+            _mm256_store_ps(sum, result);
+
+            // Accumulate the results into matrixC
+            matrixC->rows[i * P + j] = sum[0] + sum[1] + sum[2] + sum[3] +
+                                       sum[4] + sum[5] + sum[6] + sum[7];
+        }
+    }
+}
+*/
