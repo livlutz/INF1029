@@ -42,32 +42,37 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
-
    int indexA, indexB, indexC;
 
     for(int i = 0; i < matrixC->height; i++){
-        //Calcula posicao inicial dos indices das matrizes A e C aqui e depois incrementa o valor dentro do loop
-        indexA = i * matrixA->width;
+        //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
         indexC = i * matrixC->width;
-        // Ponteiro direto para a linha i da matriz C
-        __m256 rowC = _mm256_load_ps(&matrixC->rows[indexC]);
 
         //itera por colunas da matriz A
         for(int j = 0; j < matrixA->width;j++){
-            //Calcula posicao inicial dos indices da matriz B e depois incrementa o valor dentro do loop
-            indexB = j * matrixB->width;
+            //Calcula posicao inicial do indice da matrizA 
+            indexA = i * matrixA->width + j;
 
             //valor do elemento da matriz A
-            __m256 valA = _mm256_set1_ps(matrixA->rows[indexA + j]);
-
-            // Ponteiro direto para a linha j da matriz B
-            __m256 rowB = _mm256_load_ps(&matrixB->rows[indexB]);
+            __m256 valA = _mm256_set1_ps(matrixA->rows[indexA]);
 
             //itera por colunas da matriz B
-            for (int k = 0; k < matrixB->width; k++){
+            for (int k = 0; k < matrixB->width; k += 8){
+
+                //Calcula posicao inicial do indice da matrizB
+                indexB = j * matrixB->width + k;
+
+                // Carrega o bloco de 8 elementos da linha j de B
+                __m256 rowB = _mm256_load_ps(&matrixB->rows[indexB]);
+
+                // Carrega o bloco de 8 elementos da linha i de C 
+                __m256 rowC = _mm256_load_ps(&matrixC->rows[indexC + k]);
+
                 //multiplica cada elemento da linha de A pelo elemento da coluna de B
                 __m256 result = _mm256_fmadd_ps(rowB,valA,rowC);
-                _mm256_store_ps(&matrixC->rows[indexC],result);
+
+                //Armazena o resultado na linha i de C
+                _mm256_store_ps(&matrixC->rows[indexC + k],result);
             }
         }
     }
