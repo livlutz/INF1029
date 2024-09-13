@@ -10,21 +10,21 @@ int main(void){
     matrixA = fopen("floats_256_2.0f.dat", "wb");
     matrixB = fopen("floats_256_5.0f.dat", "wb");
 
-    rowsA = (float*)malloc((8 * 16)*sizeof(float));
-    rowsB = (float*)malloc((16 * 8)*sizeof(float));
+    rowsA = (float*)malloc((2048 * 2048)*sizeof(float));
+    rowsB = (float*)malloc((2048 * 2048)*sizeof(float));
 
     if(rowsA == NULL || rowsB == NULL){
         printf("Erro ao alocar memoria\n");
         return 1;
     }
 
-    for(int i = 0; i < (8 * 16);i++){
+    for(int i = 0; i < (2048 * 2048);i++){
         rowsA[i] = 2.0;
         rowsB[i] = 5.0;
     }
 
-    fwrite(rowsA, sizeof(float), (8 * 16), matrixA);
-    fwrite(rowsB, sizeof(float), (8 * 16), matrixB);
+    fwrite(rowsA, sizeof(float), (2048 * 2048), matrixA);
+    fwrite(rowsB, sizeof(float), (2048 * 2048), matrixB);
     
     fclose(matrixA);
     fclose(matrixB);
@@ -38,7 +38,7 @@ int main(void){
 /*Instrucoes pra rodar o trabalho : 
 gcc –std=c11 –mfma -o matrix_lib_test matrix_lib_test.c matrix_lib.c timer.c
 Exemplo de linha de comando:
-matrix_lib_test 5.0 8 16 16 8 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat
+matrix_lib_test 5.0 2048 2048 2048 2048 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat
 Onde,
 5.0 é o valor escalar que multiplicará a primeira matriz;
 8 é o número de linhas da primeira matriz;
