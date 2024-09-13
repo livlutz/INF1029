@@ -45,8 +45,6 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
    int indexA, indexB, indexC;
 
     for(int i = 0; i < matrixC->height; i++){
-        //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
-        indexC = i * matrixC->width;
 
         //itera por colunas da matriz A
         for(int j = 0; j < matrixA->width;j++){
@@ -61,18 +59,20 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
 
                 //Calcula posicao inicial do indice da matrizB
                 indexB = j * matrixB->width + k;
+                //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
+                indexC = i * matrixC->width + k;
 
                 // Carrega o bloco de 8 elementos da linha j de B
                 __m256 rowB = _mm256_load_ps(&matrixB->rows[indexB]);
 
                 // Carrega o bloco de 8 elementos da linha i de C 
-                __m256 rowC = _mm256_load_ps(&matrixC->rows[indexC + k]);
+                __m256 rowC = _mm256_load_ps(&matrixC->rows[indexC]);
 
                 //multiplica cada elemento da linha de A pelo elemento da coluna de B
                 __m256 result = _mm256_fmadd_ps(rowB,valA,rowC);
 
                 //Armazena o resultado na linha i de C
-                _mm256_store_ps(&matrixC->rows[indexC + k],result);
+                _mm256_store_ps(&matrixC->rows[indexC],result);
             }
         }
     }
