@@ -15,19 +15,15 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
     if (matrix == NULL){
         return 0;
     }
-
-    /*itera por linhas da matriz
-    for(int i = 0; i < matrix->height;i++){
-        //itera por colunas da matriz
-        for(int j = 0; j < matrix->width;j++){
-            /*calcula o multiplo de 8 da posicao do elemento da matrix no array de rows 
-            e multiplica pelo escalar*/
-            /*matrix->rows[i * matrix->width + j] *= scalar_value;
-        }
-    }*/
+    __m256 scalar = _mm256_set1_ps(scalar_value);
 
    // Usar instruções AVX para multiplicar todos os elementos da matriz por um escalar
-
+   for(int i = 0; i< matrix->height * matrix->width; i += 8){
+        __m256 row = _mm256_load_ps(&matrix->rows[i]);
+        __m256 result = _mm256_mul_ps(row,scalar);
+        _mm256_store_ps(&matrix->rows[i],result);
+   }
+       
     return 1;
 }
 
@@ -41,44 +37,18 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     o numero de colunas da primeira matrix tem q ser igual ao numero de linhas da segunda matrix
     a matriz resultante tem que ter o numero de linhas da primeira matriz e o numero de colunas da segunda matriz*/
     
-    /*int indexA, indexB, indexC;
-    float valA;
-    float *rowC, *rowB;*/
-
     if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
         printf("Erro de dimensao ou alocacao\n");
         return 0;
     }
 
-    //itera por linhas da matriz C
-    /*for(int i = 0; i < matrixC->height; i++){
-        //Calcula posicao inicial dos indices das matrizes A e C aqui e depois incrementa o valor dentro do loop
-        indexA = i * matrixA->width;
-        indexC = i * matrixC->width;
-        // Ponteiro direto para a linha i da matriz C
-        rowC = &matrixC->rows[indexC];
-
-        //itera por colunas da matriz A
-        for(int j = 0; j < matrixA->width;j++){
-            //Calcula posicao inicial dos indices da matriz B e depois incrementa o valor dentro do loop
-            indexB = j * matrixB->width;
-
-            //valor do elemento da matriz A
-            valA = matrixA->rows[indexA + j];
-
-            // Ponteiro direto para a linha j da matriz B
-            rowB = &matrixB->rows[indexB];
-
-            //itera por colunas da matriz B
-            for (int k = 0; k < matrixB->width; k++){
-                //multiplica cada elemento da linha de A pelo elemento da coluna de B
-                rowC[k] += valA * rowB[k];
-            }
-        }
-    }*/
-
-   // Usar instruções AVX para multiplicar duas matrizes
+   for(int i = 0; i < matrixC->height * matrixC->width; i += 8){
+        __m256 rowC = _mm256_load_ps(&matrixC->rows[i]);
+        __m256 rowA = _mm256_load_ps(&matrixA->rows[i]);
+        __m256 rowB = _mm256_load_ps(&matrixB->rows[i]);
+        __m256 result = _mm256_fmadd_ps(rowA,rowB,rowC);
+        _mm256_store_ps(&matrixC->rows[i],result);
+   }
 
     return 1;
-
 }
