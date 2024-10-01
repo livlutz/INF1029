@@ -33,6 +33,8 @@ de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
 
 int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
 
+    //gerencia as threads (create e join) e chama a função da conta
+
     /*se o ponteiro de alguma matrix for nulo (matrix nao existe), retorna erro
     o numero de colunas da primeira matrix tem q ser igual ao numero de linhas da segunda matrix
     a matriz resultante tem que ter o numero de linhas da primeira matriz e o numero de colunas da segunda matriz*/
@@ -80,6 +82,10 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     return 1;
 }
 
+int matrix_matrix_mult_thread(){
+    //fazer a conta
+    //pegar a qtd de linhas / num de threads = N da conta
+}
 
 void set_number_threads(int num_threads){
 
