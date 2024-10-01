@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
     matrixA.width = strtol(argv[3], &eptr, 10);
     matrixB.height = strtol(argv[4], &eptr, 10);
     matrixB.width = strtol(argv[5], &eptr, 10);
-    set_number_threads(NumThreads);
+    NumThreads = strtof(argv[6], &eptr);
     matrixC.height = matrixA.height;
     matrixC.width = matrixB.width;
 
@@ -194,24 +194,9 @@ int main(int argc, char *argv[]) {
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
     gettimeofday(&start, NULL);
-    /* Create threads to calculate product of arrays */
-    for(int j = 0; j < NumThreads;j++){
-        //tem q usar a scalar_matrix_mult no lugar de mult_arrays
-        pthread_create(&threads[j],&attr,mult_arrays,(void *)&thread_data_array[j]);
-    }
-
-    /*sincronização*/
-    for(int t = 0; t < NumThreads;t++){
-        rc = pthread_join(threads[t],&status);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
-    }
-
     if (!scalar_matrix_mult(scalar_value, &matrixA)) {
-        printf("%s: scalar_matrix_mult problem.", argv[0]);
-        return 1;
+	    printf("%s: scalar_matrix_mult problem.", argv[0]);
+	    return 1;
     }
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
@@ -227,27 +212,12 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    /* Calculate the product between matrix A and matrix B */
+     /* Calculate the product between matrix A and matrix B */
     printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
     gettimeofday(&start, NULL);
-
-    /* Create threads to calculate product of arrays */
-    for(int j = 0; j < NumThreads;j++){
-        //tem q usar matrix_matrix_mult no lugar de mult_arrays
-        pthread_create(&threads[j],&attr,mult_arrays,(void *)&thread_data_array[j]);
-    }
-
-    for(int t = 0; t < NumThreads;t++){
-        rc = pthread_join(threads[t],&status);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
-    }
-
     if (!matrix_matrix_mult(&matrixA, &matrixB, &matrixC)) {
-        printf("%s: matrix_matrix_mult problem.", argv[0]);
-        return 1;
+	    printf("%s: matrix_matrix_mult problem.", argv[0]);
+	    return 1;
     }
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
@@ -262,9 +232,6 @@ int main(int argc, char *argv[]) {
         printf("%s: failed to write second result to file.", argv[0]);
         return 1;
     }
-
-    /* Free attribute and wait for the other threads */
-    pthread_attr_destroy(&attr);
 
     /* Check foor errors */
     printf("Checking matrixC for errors...\n");

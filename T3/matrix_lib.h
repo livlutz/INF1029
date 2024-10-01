@@ -20,11 +20,12 @@ struct matrix {
 
 struct thread_data {
    long thread_id;
-   float* a;
-   float* b;
-   float* c;
+   struct matrix* a;
+   struct matrix* b;
+   struct matrix* c;
    int  offset_ini;
    int  offset_fim;
+   int scalar;
 };
 
 int scalar_matrix_mult(float scalar_value, struct matrix *matrix);
