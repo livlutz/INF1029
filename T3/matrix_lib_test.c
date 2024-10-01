@@ -13,6 +13,15 @@ float scalar_value = 0.0f;
 
 struct matrix matrixA, matrixB, matrixC;
 
+struct thread_data {
+   long thread_id;
+   float* a;
+   float* b;
+   float* c;
+   int  offset_ini;
+   int  offset_fim;
+};
+
 int store_matrix(struct matrix *matrix, char *filename) {
     FILE* arq = fopen(filename, "wb");
     int qtd = fwrite(matrix->rows, sizeof(float), matrix->height*matrix->width, arq);
@@ -87,119 +96,158 @@ int check_errors(struct matrix *matrix, float scalar_value) {
 }
 
 int main(int argc, char *argv[]) {
-  unsigned long int DimA_M, DimA_N, DimB_M, DimB_N;
-  char *matrixA_filename, *matrixB_filename, *result1_filename, *result2_filename;
-  char *eptr = NULL;
-  struct timeval start, stop, overall_t1, overall_t2;
-  int carregaA, carregaB, inicializaC,NumThreads;
+    unsigned long int DimA_M, DimA_N, DimB_M, DimB_N;
+    char *matrixA_filename, *matrixB_filename, *result1_filename, *result2_filename;
+    char *eptr = NULL;
+    struct timeval start, stop, overall_t1, overall_t2;
+    int carregaA, carregaB, inicializaC,NumThreads,tam_arr;
 
-  // Mark overall start time
-  gettimeofday(&overall_t1, NULL);
+    // Mark overall start time
+    gettimeofday(&overall_t1, NULL);
 
-  // Check arguments
-  if (argc != 10) {
-        printf("Usage: %s <scalar_value> <DimA_M> <DimA_N> <DimB_M> <DimB_N> <NumThreads> <matrixA_filename> <matrixB_filename> <result1_filename> <result2_filename>\n", argv[0]);
-        return 0;
-  }
+    // Check arguments
+    if (argc != 10) {
+            printf("Usage: %s <scalar_value> <DimA_M> <DimA_N> <DimB_M> <DimB_N> <NumThreads> <matrixA_filename> <matrixB_filename> <result1_filename> <result2_filename>\n", argv[0]);
+            return 0;
+    }
 
-  // Convert arguments
-  scalar_value = strtof(argv[1], &eptr);
-  matrixA.height = strtol(argv[2], &eptr, 10);
-  matrixA.width = strtol(argv[3], &eptr, 10);
-  matrixB.height = strtol(argv[4], &eptr, 10);
-  matrixB.width = strtol(argv[5], &eptr, 10);
-  set_number_threads(NumThreads);
-  matrixC.height = matrixA.height;
-  matrixC.width = matrixB.width;
+    // Convert arguments
+    scalar_value = strtof(argv[1], &eptr);
+    matrixA.height = strtol(argv[2], &eptr, 10);
+    matrixA.width = strtol(argv[3], &eptr, 10);
+    matrixB.height = strtol(argv[4], &eptr, 10);
+    matrixB.width = strtol(argv[5], &eptr, 10);
+    set_number_threads(NumThreads);
+    matrixC.height = matrixA.height;
+    matrixC.width = matrixB.width;
 
-  result1_filename = argv[9];
-  result2_filename = argv[10];
+    result1_filename = argv[9];
+    result2_filename = argv[10];
   
-  /* Allocate the arrays of the four matrixes */
+    /* Allocate the arrays of the four matrixes */
 
-  matrixA.rows = (float*) aligned_alloc(32, (matrixA.height * matrixA.width) * sizeof(float));
-  matrixB.rows = (float*) aligned_alloc(32, (matrixB.height * matrixB.width) * sizeof(float));
-  matrixC.rows = (float*) aligned_alloc(32, (matrixA.height * matrixB.width) * sizeof(float));
+    matrixA.rows = (float*) aligned_alloc(32, (matrixA.height * matrixA.width) * sizeof(float));
+    matrixB.rows = (float*) aligned_alloc(32, (matrixB.height * matrixB.width) * sizeof(float));
+    matrixC.rows = (float*) aligned_alloc(32, (matrixA.height * matrixB.width) * sizeof(float));
 
-  /*Checks allocations*/
-  if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
-      printf("Erro ao alocar memoria\n");
-      return 0;
-  }
+    /*Checks allocations*/
+    if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
+        printf("Erro ao alocar memoria\n");
+        return 0;
+    }
 
-  /* Initialize the three matrixes */
-  carregaA = load_matrix(&matrixA, argv[6]);
-  carregaB = load_matrix(&matrixB, argv[7]);
+    /* Initialize the three matrixes */
+    carregaA = load_matrix(&matrixA, argv[6]);
+    carregaB = load_matrix(&matrixB, argv[7]);
 
-  /*Checks if matrixes were loaded correctly */
-  if(carregaA == 0 || carregaB == 0){
-      printf("Erro ao carregar as matrizes\n");
-      return 0;
-  }
+    /*Checks if matrixes were loaded correctly */
+    if(carregaA == 0 || carregaB == 0){
+        printf("Erro ao carregar as matrizes\n");
+        return 0;
+    }
 
-  inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
+    inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
+    tam_arr = matrixA.height * matrixA.width;
 
-  /* Scalar product of matrix A */
-  printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
-  gettimeofday(&start, NULL);
-  if (!scalar_matrix_mult(scalar_value, &matrixA)) {
-	printf("%s: scalar_matrix_mult problem.", argv[0]);
-	return 1;
-  }
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
+    pthread_t threads[NumThreads];
+    struct thread_data thread_data_array[NumThreads];
+    int slice = tam_arr/NumThreads;
+    pthread_attr_t attr;
+    void* status;
+    int rc;
 
-  /* Print matrix */
-  printf("---------- Matrix A ----------\n");
-  print_matrix(&matrixA);
+    /*Initialize and set thread detached attribute */
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-  /* Write first result */
-  printf("Writing first result: %s...\n", result1_filename);
-  if (!store_matrix(&matrixA, result1_filename)) {
-	printf("%s: failed to write first result to file.", argv[0]);
-	return 1;
-  }
+    /* Create threads to initialize arrays */
+    for(int i = 0; i < NumThreads;i++){
+        printf("In main: creating thread %ld\n", i);
+        thread_data_array[i].thread_id = i;
+        thread_data_array[i].offset_ini =  thread_data_array[i].thread_id * slice;
+        thread_data_array[i].offset_fim =  thread_data_array[i].offset_ini + slice; 
+        thread_data_array[i].a = matrixA.rows;
+        thread_data_array[i].b = matrixB.rows;
+        thread_data_array[i].c = matrixC.rows;
+        pthread_create(&threads[i],&attr,init_arrays,(void *)&thread_data_array[i]);
+    }
 
-  /* Calculate the product between matrix A and matrix B */
-  printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
-  gettimeofday(&start, NULL);
-  if (!matrix_matrix_mult(&matrixA, &matrixB, &matrixC)) {
-	printf("%s: matrix_matrix_mult problem.", argv[0]);
-	return 1;
-  }
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
+    /*sincronização*/
+    for(int t = 0; t < NumThreads;t++){
+        rc = pthread_join(threads[t],&status);
+        if (rc){
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
 
-  /* Print matrix */
-  printf("---------- Matrix C ----------\n");
-  print_matrix(&matrixC);
+    /* Create threads to calculate product of arrays */
+    for(int j = 0; j < NUM_THREADS;j++){
+        printf("In main: creating thread multiply %ld\n", j);
+        pthread_create(&threads[j],&attr,mult_arrays,(void *)&thread_data_array[j]);
+    }
 
-  /* Write second result */
-  printf("Writing second result: %s...\n", result2_filename);
-  if (!store_matrix(&matrixC, result2_filename)) {
-	printf("%s: failed to write second result to file.", argv[0]);
-	return 1;
-  }
+    /* Scalar product of matrix A */
+    printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
+    gettimeofday(&start, NULL);
+    if (!scalar_matrix_mult(scalar_value, &matrixA)) {
+        printf("%s: scalar_matrix_mult problem.", argv[0]);
+        return 1;
+    }
+    gettimeofday(&stop, NULL);
+    printf("%f ms\n", timedifference_msec(start, stop));
 
-  /* Check foor errors */
-  printf("Checking matrixC for errors...\n");
-  gettimeofday(&start, NULL);
-  /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
-  if (check_errors(&matrixC, 51200.0f) == 1){
-    printf("No errors found\n");
-  };
-  gettimeofday(&stop, NULL);
-  printf("%f ms\n", timedifference_msec(start, stop));
+    /* Print matrix */
+    printf("---------- Matrix A ----------\n");
+    print_matrix(&matrixA);
 
-  free(matrixA.rows);
-  free(matrixB.rows);
-  free(matrixC.rows);
+    /* Write first result */
+    printf("Writing first result: %s...\n", result1_filename);
+    if (!store_matrix(&matrixA, result1_filename)) {
+        printf("%s: failed to write first result to file.", argv[0]);
+        return 1;
+    }
 
-  // Mark overall stop time
-  gettimeofday(&overall_t2, NULL);
+    /* Calculate the product between matrix A and matrix B */
+    printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
+    gettimeofday(&start, NULL);
+    if (!matrix_matrix_mult(&matrixA, &matrixB, &matrixC)) {
+        printf("%s: matrix_matrix_mult problem.", argv[0]);
+        return 1;
+    }
+    gettimeofday(&stop, NULL);
+    printf("%f ms\n", timedifference_msec(start, stop));
 
-  // Show elapsed overall time
-  printf("Overall time: %f ms\n", timedifference_msec(overall_t1, overall_t2));
+    /* Print matrix */
+    printf("---------- Matrix C ----------\n");
+    print_matrix(&matrixC);
 
-  return 0;
+    /* Write second result */
+    printf("Writing second result: %s...\n", result2_filename);
+    if (!store_matrix(&matrixC, result2_filename)) {
+        printf("%s: failed to write second result to file.", argv[0]);
+        return 1;
+    }
+
+    /* Check foor errors */
+    printf("Checking matrixC for errors...\n");
+    gettimeofday(&start, NULL);
+    /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
+    if (check_errors(&matrixC, 51200.0f) == 1){
+        printf("No errors found\n");
+    };
+    gettimeofday(&stop, NULL);
+    printf("%f ms\n", timedifference_msec(start, stop));
+
+    free(matrixA.rows);
+    free(matrixB.rows);
+    free(matrixC.rows);
+
+    // Mark overall stop time
+    gettimeofday(&overall_t2, NULL);
+
+    // Show elapsed overall time
+    printf("Overall time: %f ms\n", timedifference_msec(overall_t1, overall_t2));
+
+    return 0;
 }
