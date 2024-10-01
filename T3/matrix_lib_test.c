@@ -263,6 +263,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    /* Free attribute and wait for the other threads */
+    pthread_attr_destroy(&attr);
+
     /* Check foor errors */
     printf("Checking matrixC for errors...\n");
     gettimeofday(&start, NULL);
