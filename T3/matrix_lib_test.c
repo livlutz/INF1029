@@ -158,38 +158,7 @@ int main(int argc, char *argv[]) {
     inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
     tam_arr = matrixA.height * matrixA.width;
 
-    pthread_t threads[NumThreads];
-    struct thread_data thread_data_array[NumThreads];
-    int slice = tam_arr/NumThreads;
-    pthread_attr_t attr;
-    void* status;
-    int rc;
-
-    /*Initialize and set thread detached attribute */
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-    /* Create threads to initialize arrays */
-    for(int i = 0; i < NumThreads;i++){
-        printf("In main: creating thread %ld\n", i);
-        thread_data_array[i].thread_id = i;
-        thread_data_array[i].offset_ini =  thread_data_array[i].thread_id * slice;
-        thread_data_array[i].offset_fim =  thread_data_array[i].offset_ini + slice; 
-        thread_data_array[i].a = matrixA.rows;
-        thread_data_array[i].b = matrixB.rows;
-        thread_data_array[i].c = matrixC.rows;
-        //nao sei qual a função q usa no lugar do init_arrays
-        pthread_create(&threads[i],&attr,init_arrays,(void *)&thread_data_array[i]);
-    }
-
-    /*sincronização*/
-    for(int t = 0; t < NumThreads;t++){
-        rc = pthread_join(threads[t],&status);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
-    }
+    set_number_threads(NumThreads);
 
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
