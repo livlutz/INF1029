@@ -83,7 +83,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
 
 void set_number_threads(int num_threads){
 
-
+    num_threads = strtof(argv[6], &eptr);
 
     return;
 }

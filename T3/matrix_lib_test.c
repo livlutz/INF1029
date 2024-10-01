@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
   matrixA.width = strtol(argv[3], &eptr, 10);
   matrixB.height = strtol(argv[4], &eptr, 10);
   matrixB.width = strtol(argv[5], &eptr, 10);
-  NumThreads = strtof(argv[6], &eptr);
+  set_number_threads(NumThreads);
   matrixC.height = matrixA.height;
   matrixC.width = matrixB.width;
 
@@ -138,8 +138,6 @@ int main(int argc, char *argv[]) {
   }
 
   inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
-
-  // Alligned_aloc
 
   /* Scalar product of matrix A */
   printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
