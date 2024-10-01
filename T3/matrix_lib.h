@@ -4,6 +4,8 @@ Ana Luiza Pinto Marques - 2211960*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <immintrin.h>
+#include <pthread.h>
+
 
 /*Onde:
 height = número de linhas da matriz (múltiplo de 8)
