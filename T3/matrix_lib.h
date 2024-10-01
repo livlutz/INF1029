@@ -18,6 +18,15 @@ struct matrix {
     float *rows;
 };
 
+struct thread_data {
+   long thread_id;
+   float* a;
+   float* b;
+   float* c;
+   int  offset_ini;
+   int  offset_fim;
+};
+
 int scalar_matrix_mult(float scalar_value, struct matrix *matrix);
 
 int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC);

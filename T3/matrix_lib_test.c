@@ -13,15 +13,6 @@ float scalar_value = 0.0f;
 
 struct matrix matrixA, matrixB, matrixC;
 
-struct thread_data {
-   long thread_id;
-   float* a;
-   float* b;
-   float* c;
-   int  offset_ini;
-   int  offset_fim;
-};
-
 int store_matrix(struct matrix *matrix, char *filename) {
     FILE* arq = fopen(filename, "wb");
     int qtd = fwrite(matrix->rows, sizeof(float), matrix->height*matrix->width, arq);
@@ -57,9 +48,11 @@ int load_matrix(struct matrix *matrix, char *filename) {
 }
 
 int initialize_matrix(struct matrix *matrix, float value, float inc) {
+    int ind;
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
-            matrix->rows[i * matrix->height + j] = value;
+            ind = i * matrix->height + j;
+            matrix->rows[ind] = value;
             value += inc;
         }
     }
@@ -93,6 +86,22 @@ int check_errors(struct matrix *matrix, float scalar_value) {
     }
 
     return 1;
+}
+
+/* Thread to initialize arrays */
+void *init_arrays(void *threadarg) {
+    struct thread_data *my_data;
+    my_data = (struct thread_data*) threadarg;
+
+    __m256 even,odd;
+    even = _mm256_set1_ps(2.0f);
+    odd = _mm256_set1_ps(5.0f);
+
+  for(int i = my_data->offset_ini; i < my_data->offset_fim ; i+= 8){
+    _mm256_store_ps(&my_data->a[i],even);
+    _mm256_store_ps(&my_data->b[i],odd);
+  }
+
 }
 
 int main(int argc, char *argv[]) {
@@ -169,6 +178,7 @@ int main(int argc, char *argv[]) {
         thread_data_array[i].a = matrixA.rows;
         thread_data_array[i].b = matrixB.rows;
         thread_data_array[i].c = matrixC.rows;
+        //nao sei qual a função q usa no lugar do init_arrays
         pthread_create(&threads[i],&attr,init_arrays,(void *)&thread_data_array[i]);
     }
 
@@ -181,15 +191,24 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* Create threads to calculate product of arrays */
-    for(int j = 0; j < NUM_THREADS;j++){
-        printf("In main: creating thread multiply %ld\n", j);
-        pthread_create(&threads[j],&attr,mult_arrays,(void *)&thread_data_array[j]);
-    }
-
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
     gettimeofday(&start, NULL);
+    /* Create threads to calculate product of arrays */
+    for(int j = 0; j < NumThreads;j++){
+        //tem q usar a scalar_matrix_mult no lugar de mult_arrays
+        pthread_create(&threads[j],&attr,mult_arrays,(void *)&thread_data_array[j]);
+    }
+
+    /*sincronização*/
+    for(int t = 0; t < NumThreads;t++){
+        rc = pthread_join(threads[t],&status);
+        if (rc){
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
     if (!scalar_matrix_mult(scalar_value, &matrixA)) {
         printf("%s: scalar_matrix_mult problem.", argv[0]);
         return 1;
@@ -211,6 +230,21 @@ int main(int argc, char *argv[]) {
     /* Calculate the product between matrix A and matrix B */
     printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
     gettimeofday(&start, NULL);
+
+    /* Create threads to calculate product of arrays */
+    for(int j = 0; j < NumThreads;j++){
+        //tem q usar matrix_matrix_mult no lugar de mult_arrays
+        pthread_create(&threads[j],&attr,mult_arrays,(void *)&thread_data_array[j]);
+    }
+
+    for(int t = 0; t < NumThreads;t++){
+        rc = pthread_join(threads[t],&status);
+        if (rc){
+            printf("ERROR; return code from pthread_create() is %d\n", rc);
+            exit(-1);
+        }
+    }
+
     if (!matrix_matrix_mult(&matrixA, &matrixB, &matrixC)) {
         printf("%s: matrix_matrix_mult problem.", argv[0]);
         return 1;
