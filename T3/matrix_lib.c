@@ -64,7 +64,7 @@ void* scalar_matrix_thread(void* threadarg){
 
     __m256 scalar = _mm256_set1_ps(my_data->scalar);
 
-    for(int i = 0; i < ((my_data->a->height * my_data->a->width)/NUMTHREADS); i += 8){
+    for(int i = my_data->offset_ini; i < my_data->offset_fim; i += 8){
         __m256 row = _mm256_load_ps(&my_data->a->rows[i]);
         __m256 result = _mm256_mul_ps(row,scalar);
         _mm256_store_ps(&my_data->a->rows[i],result);
@@ -133,7 +133,7 @@ void* matrix_matrix_mult_thread(void* threadarg){
 
     int indexA, indexB, indexC;
 
-    for(int i = 0; i < (my_data->c->height/NUMTHREADS); i++){
+    for(int i = my_data->offset_ini; i < my_data->offset_fim; i++){
 
         //itera por colunas da matriz A
         for(int j = 0; j < my_data->a->width; j++){
