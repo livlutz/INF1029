@@ -27,6 +27,10 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
     void* status;
     int rc;
 
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+
     for(int i = 0; i< NUMTHREADS;i++){
         thread_data_array[i].thread_id = i;
         thread_data_array[i].offset_ini =  thread_data_array[i].thread_id * slice;
@@ -60,7 +64,7 @@ void* scalar_matrix_thread(void* threadarg){
 
     __m256 scalar = _mm256_set1_ps(my_data->scalar);
 
-    for(int i = my_data->offset_ini;i < my_data->offset_fim;i += 8){
+    for(int i = 0; i < ((my_data->a->height * my_data->a->width)/NUMTHREADS); i += 8){
         __m256 row = _mm256_load_ps(&my_data->a->rows[i]);
         __m256 result = _mm256_mul_ps(row,scalar);
         _mm256_store_ps(&my_data->a->rows[i],result);
@@ -91,7 +95,11 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     void* status;
     int rc;
 
-    for(int i = 0; i< NUMTHREADS;i++){
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+
+    for(int i = 0; i < NUMTHREADS; i++){
         thread_data_array[i].thread_id = i;
         thread_data_array[i].offset_ini =  thread_data_array[i].thread_id * slice;
         thread_data_array[i].offset_fim =  thread_data_array[i].offset_ini + slice; 
@@ -125,10 +133,10 @@ void* matrix_matrix_mult_thread(void* threadarg){
 
     int indexA, indexB, indexC;
 
-    for(int i = 0; i < my_data->c->height; i++){
+    for(int i = 0; i < (my_data->c->height/NUMTHREADS); i++){
 
         //itera por colunas da matriz A
-        for(int j = 0; j < my_data->a->width;j++){
+        for(int j = 0; j < my_data->a->width; j++){
             //Calcula posicao inicial do indice da matrizA 
             indexA = i * my_data->a->width + j;
 
