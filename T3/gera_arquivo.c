@@ -38,6 +38,11 @@ int main(void){
 
 /*Instruções para rodar o trabalho :
 
+gcc -Wall -o gera_arquivo gera_arquivo.c
+./gera_arquivo
+
 No servidor da PUC : gcc -std=c11 -pthread -mfma -o matrix_lib_test matrix_lib_test.c matrix_lib.c timer.c  
+
+Na minha humilde residencia : gcc -pthread -mfma -mavx2 -o matrix_lib_test matrix_lib_test.c matrix_lib.c timer.c
 
 ./matrix_lib_test 5.0 8 16 16 8 4 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat */

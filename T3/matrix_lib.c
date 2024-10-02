@@ -110,7 +110,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     }
 
     pthread_attr_destroy(&attr);
-    
+
     return 1;
 }
 
@@ -158,7 +158,6 @@ void* matrix_matrix_mult_thread(void* threadarg){
         }
     }
 
-    return 1;
 }
 
 void set_number_threads(int num_threads){

@@ -88,22 +88,6 @@ int check_errors(struct matrix *matrix, float scalar_value) {
     return 1;
 }
 
-/* Thread to initialize arrays */
-void *init_arrays(void *threadarg) {
-    struct thread_data *my_data;
-    my_data = (struct thread_data*) threadarg;
-
-    __m256 even,odd;
-    even = _mm256_set1_ps(2.0f);
-    odd = _mm256_set1_ps(5.0f);
-
-  for(int i = my_data->offset_ini; i < my_data->offset_fim ; i+= 8){
-    _mm256_store_ps(&my_data->a[i],even);
-    _mm256_store_ps(&my_data->b[i],odd);
-  }
-
-}
-
 int main(int argc, char *argv[]) {
     unsigned long int DimA_M, DimA_N, DimB_M, DimB_N;
     char *matrixA_filename, *matrixB_filename, *result1_filename, *result2_filename;
@@ -115,7 +99,7 @@ int main(int argc, char *argv[]) {
     gettimeofday(&overall_t1, NULL);
 
     // Check arguments
-    if (argc != 10) {
+    if (argc != 11) {
             printf("Usage: %s <scalar_value> <DimA_M> <DimA_N> <DimB_M> <DimB_N> <NumThreads> <matrixA_filename> <matrixB_filename> <result1_filename> <result2_filename>\n", argv[0]);
             return 0;
     }
@@ -146,8 +130,8 @@ int main(int argc, char *argv[]) {
     }
 
     /* Initialize the three matrixes */
-    carregaA = load_matrix(&matrixA, argv[6]);
-    carregaB = load_matrix(&matrixB, argv[7]);
+    carregaA = load_matrix(&matrixA, argv[7]);
+    carregaB = load_matrix(&matrixB, argv[8]);
 
     /*Checks if matrixes were loaded correctly */
     if(carregaA == 0 || carregaB == 0){
