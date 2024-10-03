@@ -15,6 +15,11 @@ struct matrix matrixA, matrixB, matrixC;
 
 int store_matrix(struct matrix *matrix, char *filename) {
     FILE* arq = fopen(filename, "wb");
+
+    if(arq == NULL){
+        printf("Erro ao abrir o arquivo para escrita\n");
+        return 0;
+    }
     int qtd = fwrite(matrix->rows, sizeof(float), matrix->height*matrix->width, arq);
 
     if(qtd != matrix->height*matrix->width){
@@ -51,7 +56,7 @@ int initialize_matrix(struct matrix *matrix, float value, float inc) {
     int ind;
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
-            ind = i * matrix->height + j;
+            ind = i * matrix->width + j;
             matrix->rows[ind] = value;
             value += inc;
         }
@@ -189,10 +194,12 @@ int main(int argc, char *argv[]) {
     /* Check foor errors */
     printf("Checking matrixC for errors...\n");
     gettimeofday(&start, NULL);
+
     /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
     if (check_errors(&matrixC, 800.0f) == 1){
         printf("No errors found\n");
     };
+    
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
