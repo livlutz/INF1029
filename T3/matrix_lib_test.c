@@ -129,6 +129,8 @@ int main(int argc, char *argv[]) {
     matrixC.rows = (float*) aligned_alloc(32, (matrixA.height * matrixB.width) * sizeof(float));
 
     printf("Endereco do C : %p\n",matrixC.rows);
+    printf("Endereco do A : %p\n",matrixA.rows);
+    printf("Endereco do B : %p\n",matrixB.rows);
 
     /*Checks allocations*/
     if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
@@ -205,10 +207,14 @@ int main(int argc, char *argv[]) {
     printf("%f ms\n", timedifference_msec(start, stop));
 
     printf("Endereco do C : %p\n",matrixC.rows);
-    
+    printf("Endereco do A : %p\n",matrixA.rows);
+    printf("Endereco do B : %p\n",matrixB.rows);
+
     free(matrixA.rows);
     free(matrixB.rows);
     free(matrixC.rows);
+
+    
 
     // Mark overall stop time
     gettimeofday(&overall_t2, NULL);
