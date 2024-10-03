@@ -56,7 +56,7 @@ int initialize_matrix(struct matrix *matrix, float value, float inc) {
     int ind;
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
-            ind = i * matrix->width + j;
+            ind = i * matrix->height + j;
             matrix->rows[ind] = value;
             value += inc;
         }
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
     char *matrixA_filename, *matrixB_filename, *result1_filename, *result2_filename;
     char *eptr = NULL;
     struct timeval start, stop, overall_t1, overall_t2;
-    int carregaA, carregaB, inicializaC,NumThreads,tam_arr;
+    int carregaA, carregaB, inicializaC,NumThreads;
 
     // Mark overall start time
     gettimeofday(&overall_t1, NULL);
@@ -145,7 +145,6 @@ int main(int argc, char *argv[]) {
     }
 
     inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
-    tam_arr = matrixA.height * matrixA.width;
 
     set_number_threads(NumThreads);
 
@@ -199,7 +198,7 @@ int main(int argc, char *argv[]) {
     if (check_errors(&matrixC, 800.0f) == 1){
         printf("No errors found\n");
     };
-    
+
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
