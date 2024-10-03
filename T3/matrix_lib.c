@@ -70,6 +70,7 @@ void* scalar_matrix_thread(void* threadarg){
         _mm256_store_ps(&my_data->a->rows[i],result);
     }
 
+    pthread_exit(NULL);
 }
 
 /*Essa função recebe 3 matrizes como argumentos de entrada e calcula o valor do produto da
@@ -131,7 +132,7 @@ void* matrix_matrix_mult_thread(void* threadarg){
     my_data = (struct thread_data*) threadarg;
 
 
-    int indexA, indexB, indexC;
+    unsigned long indexA, indexB, indexC;
 
     for(int i = my_data->offset_ini; i < my_data->offset_fim; i++){
 
@@ -165,6 +166,8 @@ void* matrix_matrix_mult_thread(void* threadarg){
             }
         }
     }
+
+    pthread_exit(NULL);
 
 }
 

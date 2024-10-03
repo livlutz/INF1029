@@ -128,6 +128,8 @@ int main(int argc, char *argv[]) {
     matrixB.rows = (float*) aligned_alloc(32, (matrixB.height * matrixB.width) * sizeof(float));
     matrixC.rows = (float*) aligned_alloc(32, (matrixA.height * matrixB.width) * sizeof(float));
 
+    printf("Endereco do C : %p\n",matrixC.rows);
+
     /*Checks allocations*/
     if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
         printf("Erro ao alocar memoria\n");
@@ -202,6 +204,8 @@ int main(int argc, char *argv[]) {
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
+    printf("Endereco do C : %p\n",matrixC.rows);
+    
     free(matrixA.rows);
     free(matrixB.rows);
     free(matrixC.rows);
