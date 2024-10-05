@@ -128,44 +128,49 @@ void* matrix_matrix_mult_thread(void* threadarg) {
     struct thread_data *my_data;
     my_data = (struct thread_data*) threadarg;
 
-    unsigned long indexA, indexB, indexC;
-
-    // Divide o trabalho de acordo com as linhas da matriz C
     int linhas_por_thread = my_data->c->height / NUMTHREADS;
     int linha_inicio = my_data->thread_id * linhas_por_thread;
     int linha_fim = (my_data->thread_id == NUMTHREADS - 1) ? my_data->c->height : linha_inicio + linhas_por_thread;
 
+    float *a_rows = my_data->a->rows;  // Ponteiro base da matriz A
+    float *b_rows = my_data->b->rows;  // Ponteiro base da matriz B
+    float *c_rows = my_data->c->rows;  // Ponteiro base da matriz C
+
+    float* a_row, *b_row, *c_row;
+
+    __m256 valA, rowB, rowC, result;
+
+    int a_width = my_data->a->width;   // Largura da matriz A (número de colunas)
+    int b_width = my_data->b->width;   // Largura da matriz B (número de colunas)
+    int c_width = my_data->c->width;   // Largura da matriz C (número de colunas)
+
+    int index_a, pre_index_b, index_b, index_c;
+
     for (int i = linha_inicio; i < linha_fim; i++) {  // i itera sobre as linhas da matriz C
-        // Itera sobre as colunas da matriz A
-        for (int j = 0; j < my_data->a->width; j++) {
-            // Calcula posição inicial do índice da matriz A
-            indexA = i * my_data->a->width + j;
+        index_c = i * c_width;
+        index_a = i * a_width;
+        c_row = &c_rows[index_c];          // Ponteiro para a linha i da matriz C
 
-            // Valor do elemento da matriz A
-            __m256 valA = _mm256_set1_ps(my_data->a->rows[indexA]);
+        for (int j = 0; j < a_width; j++) {           // Itera sobre as colunas da matriz A
+            pre_index_b = j* b_width;
+            a_row = &a_rows[index_a];      // Ponteiro para a linha i da matriz A
+            valA = _mm256_set1_ps(a_row[j]);   // Carrega o valor de A para multiplicar com a linha de B
 
-            // Itera sobre as colunas da matriz B
-            for (int k = 0; k < my_data->b->width; k += 8) {
-                // Verifica se a operação não ultrapassa o limite da linha
-                if (k + 8 > my_data->b->width) {
-                    break; // Sai do loop se ultrapassar o limite
+            for (int k = 0; k < b_width; k += 8) {    // Itera sobre as colunas da matriz B e processa 8 elementos por vez
+                index_b = pre_index_b + k;
+                if (k + 8 > b_width) {
+                    break; // Evita ultrapassar o limite
                 }
 
-                // Calcula a posição inicial dos índices das matrizes B e C
-                indexB = j * my_data->b->width + k;
-                indexC = i * my_data->c->width + k;
-                
-                // Carrega o bloco de 8 elementos da linha j de B
-                __m256 rowB = _mm256_load_ps(&my_data->b->rows[indexB]);
+                b_row = &b_rows[index_b];  // Ponteiro para a linha j da matriz B (8 elementos)
+                rowB = _mm256_load_ps(b_row);      // Carrega 8 elementos da linha de B
+                rowC = _mm256_load_ps(&c_row[k]);  // Carrega 8 elementos da linha i de C
 
-                // Carrega o bloco de 8 elementos da linha i de C
-                __m256 rowC = _mm256_load_ps(&my_data->c->rows[indexC]);
-
-                // Multiplica cada elemento da linha de A pelo elemento da coluna de B
-                __m256 result = _mm256_fmadd_ps(rowB, valA, rowC);
+                // Multiplica cada elemento da linha de A pelo elemento correspondente da coluna de B e acumula em C
+                result = _mm256_fmadd_ps(rowB, valA, rowC);
 
                 // Armazena o resultado na linha i de C
-                _mm256_store_ps(&my_data->c->rows[indexC], result);
+                _mm256_store_ps(&c_row[k], result);
             }
         }
     }
