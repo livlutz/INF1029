@@ -128,10 +128,6 @@ int main(int argc, char *argv[]) {
     matrixB.rows = (float*) aligned_alloc(32, (matrixB.height * matrixB.width) * sizeof(float));
     matrixC.rows = (float*) aligned_alloc(32, (matrixA.height * matrixB.width) * sizeof(float));
 
-    printf("Endereco do C : %p\n",matrixC.rows);
-    printf("Endereco do A : %p\n",matrixA.rows);
-    printf("Endereco do B : %p\n",matrixB.rows);
-
     /*Checks allocations*/
     if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
         printf("Erro ao alocar memoria\n");
@@ -199,22 +195,16 @@ int main(int argc, char *argv[]) {
     gettimeofday(&start, NULL);
 
     /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
-    if (check_errors(&matrixC, 800.0f) == 1){
+    if (check_errors(&matrixC, 51200.0f) == 1){
         printf("No errors found\n");
     };
 
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
-    printf("Endereco do C : %p\n",matrixC.rows);
-    printf("Endereco do A : %p\n",matrixA.rows);
-    printf("Endereco do B : %p\n",matrixB.rows);
-
     free(matrixA.rows);
     free(matrixB.rows);
     free(matrixC.rows);
-
-    
 
     // Mark overall stop time
     gettimeofday(&overall_t2, NULL);

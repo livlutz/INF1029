@@ -123,52 +123,54 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     return 1;
 }
 
-void* matrix_matrix_mult_thread(void* threadarg){
-    //faz a multiplicacao
-
-    //pegar a qtd de linhas / num de threads = N da conta
-
+void* matrix_matrix_mult_thread(void* threadarg) {
+    // Faz a multiplicação de matrizes
     struct thread_data *my_data;
     my_data = (struct thread_data*) threadarg;
 
-
     unsigned long indexA, indexB, indexC;
 
-    for(int i = my_data->offset_ini; i < my_data->offset_fim; i++){
+    // Divide o trabalho de acordo com as linhas da matriz C
+    int linhas_por_thread = my_data->c->height / NUMTHREADS;
+    int linha_inicio = my_data->thread_id * linhas_por_thread;
+    int linha_fim = (my_data->thread_id == NUMTHREADS - 1) ? my_data->c->height : linha_inicio + linhas_por_thread;
 
-        //itera por colunas da matriz A
-        for(int j = 0; j < my_data->a->width; j++){
-            //Calcula posicao inicial do indice da matrizA 
+    for (int i = linha_inicio; i < linha_fim; i++) {  // i itera sobre as linhas da matriz C
+        // Itera sobre as colunas da matriz A
+        for (int j = 0; j < my_data->a->width; j++) {
+            // Calcula posição inicial do índice da matriz A
             indexA = i * my_data->a->width + j;
 
-            //valor do elemento da matriz A
+            // Valor do elemento da matriz A
             __m256 valA = _mm256_set1_ps(my_data->a->rows[indexA]);
 
-            //itera por colunas da matriz B
-            for (int k = 0; k < my_data->b->width; k += 8){
+            // Itera sobre as colunas da matriz B
+            for (int k = 0; k < my_data->b->width; k += 8) {
+                // Verifica se a operação não ultrapassa o limite da linha
+                if (k + 8 > my_data->b->width) {
+                    break; // Sai do loop se ultrapassar o limite
+                }
 
-                //Calcula posicao inicial do indice da matrizB
+                // Calcula a posição inicial dos índices das matrizes B e C
                 indexB = j * my_data->b->width + k;
-                //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
                 indexC = i * my_data->c->width + k;
-
+                
                 // Carrega o bloco de 8 elementos da linha j de B
                 __m256 rowB = _mm256_load_ps(&my_data->b->rows[indexB]);
 
-                // Carrega o bloco de 8 elementos da linha i de C 
+                // Carrega o bloco de 8 elementos da linha i de C
                 __m256 rowC = _mm256_load_ps(&my_data->c->rows[indexC]);
 
-                //multiplica cada elemento da linha de A pelo elemento da coluna de B
-                __m256 result = _mm256_fmadd_ps(rowB,valA,rowC);
+                // Multiplica cada elemento da linha de A pelo elemento da coluna de B
+                __m256 result = _mm256_fmadd_ps(rowB, valA, rowC);
 
-                //Armazena o resultado na linha i de C
-                _mm256_store_ps(&my_data->c->rows[indexC],result);
+                // Armazena o resultado na linha i de C
+                _mm256_store_ps(&my_data->c->rows[indexC], result);
             }
         }
     }
 
     pthread_exit(NULL);
-
 }
 
 void set_number_threads(int num_threads){
