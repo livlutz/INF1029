@@ -89,7 +89,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     //cria e da join das threads
     int tam_arr = matrixC->height * matrixC->width;
     pthread_t threads[NUMTHREADS];
-    struct thread_data thread_data_array[NUMTHREADS];
+    struct thread_data thread_data_array[NUMTHREADS], aux;
 
     int slice = tam_arr/NUMTHREADS;
     pthread_attr_t attr;
@@ -100,14 +100,18 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 
-    for(int i = 0; i < NUMTHREADS; i++){
-        thread_data_array[i].thread_id = i;
-        thread_data_array[i].offset_ini =  thread_data_array[i].thread_id * slice;
-        thread_data_array[i].offset_fim =  thread_data_array[i].offset_ini + slice; 
-        thread_data_array[i].a = matrixA;
-        thread_data_array[i].b = matrixB;
-        thread_data_array[i].c = matrixC;
-        pthread_create(&threads[i],&attr,matrix_matrix_mult_thread,(void *)&thread_data_array[i]);
+    for (int i = 0; i < NUMTHREADS; i++) {
+        aux.thread_id = i;
+        aux.offset_ini = aux.thread_id * slice;
+        aux.offset_fim = aux.offset_ini + slice;
+        aux.a = matrixA;
+        aux.b = matrixB;
+        aux.c = matrixC;
+
+        // Copia o conteúdo de 'aux' de volta para thread_data_array[i]
+        thread_data_array[i] = aux;
+
+        pthread_create(&threads[i], &attr, matrix_matrix_mult_thread, (void *)&thread_data_array[i]);
     }
     
     for(int t = 0; t < NUMTHREADS;t++){
@@ -136,7 +140,7 @@ void* matrix_matrix_mult_thread(void* threadarg) {
     float *b_rows = my_data->b->rows;  // Ponteiro base da matriz B
     float *c_rows = my_data->c->rows;  // Ponteiro base da matriz C
 
-    float* a_row, *b_row, *c_row;
+    float* a_row, *b_row, *c_row, *linha_c;
 
     __m256 valA, rowB, rowC, result;
 
@@ -158,19 +162,17 @@ void* matrix_matrix_mult_thread(void* threadarg) {
 
             for (int k = 0; k < b_width; k += 8) {    // Itera sobre as colunas da matriz B e processa 8 elementos por vez
                 index_b = pre_index_b + k;
-                if (k + 8 > b_width) {
-                    break; // Evita ultrapassar o limite
-                }
+                linha_c = &c_row[k];
 
                 b_row = &b_rows[index_b];  // Ponteiro para a linha j da matriz B (8 elementos)
                 rowB = _mm256_load_ps(b_row);      // Carrega 8 elementos da linha de B
-                rowC = _mm256_load_ps(&c_row[k]);  // Carrega 8 elementos da linha i de C
+                rowC = _mm256_load_ps(linha_c);  // Carrega 8 elementos da linha i de C
 
                 // Multiplica cada elemento da linha de A pelo elemento correspondente da coluna de B e acumula em C
                 result = _mm256_fmadd_ps(rowB, valA, rowC);
 
                 // Armazena o resultado na linha i de C
-                _mm256_store_ps(&c_row[k], result);
+                _mm256_store_ps(linha_c, result);
             }
         }
     }
