@@ -131,11 +131,7 @@ void* matrix_matrix_mult_thread(void* threadarg) {
     // Faz a multiplicação de matrizes
     struct thread_data *my_data;
     my_data = (struct thread_data*) threadarg;
-
-    int linhas_por_thread = my_data->c->height / NUMTHREADS;
-    int linha_inicio = my_data->thread_id * linhas_por_thread;
-    int linha_fim = (my_data->thread_id == NUMTHREADS - 1) ? my_data->c->height : linha_inicio + linhas_por_thread;
-
+    
     float *a_rows = my_data->a->rows;  // Ponteiro base da matriz A
     float *b_rows = my_data->b->rows;  // Ponteiro base da matriz B
     float *c_rows = my_data->c->rows;  // Ponteiro base da matriz C
@@ -149,6 +145,10 @@ void* matrix_matrix_mult_thread(void* threadarg) {
     int indexA, indexB, indexC;
 
     __m256 valA, rowB, rowC, result;
+
+    int linhas_por_thread = my_data->c->height / NUMTHREADS;
+    int linha_inicio = my_data->thread_id * linhas_por_thread;
+    int linha_fim = (my_data->thread_id == NUMTHREADS - 1) ? my_data->c->height : linha_inicio + linhas_por_thread;
 
     for (int i = linha_inicio; i < linha_fim; i++) {  // i itera sobre as linhas da matriz C
         indexC = i * c_width; 
