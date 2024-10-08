@@ -158,8 +158,8 @@ void* matrix_matrix_mult_thread(void* threadarg) {
 
         for (int j = 0; j < a_width; j++) {           // Itera sobre as colunas da matriz A
             valA = _mm256_set1_ps(a_row[j]);          // Carrega o valor de A para multiplicar com a linha de B
-
-            b_row = &b_rows[j * b_width];             // Ponteiro direto para a linha j de B
+            indexB = j * b_width;
+            b_row = &b_rows[indexB];             // Ponteiro direto para a linha j de B
 
             for (int k = 0; k < b_width; k += 8) {    // Itera sobre as colunas da matriz B e processa 8 elementos por vez
                 // Carrega 8 elementos de B e C para o cálculo 
