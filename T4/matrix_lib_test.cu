@@ -104,6 +104,8 @@ int main(int argc, char *argv[]) {
     char *eptr = NULL;
     struct timeval start, stop, overall_t1, overall_t2;
     int carregaA, carregaB, inicializaC,NumThreads,threads_per_block,max_blocks_per_grid;
+    cudaError_t cudaError;
+    float*A,*B,*C;
 
     // Mark overall start time
     gettimeofday(&overall_t1, NULL);
@@ -134,9 +136,9 @@ int main(int argc, char *argv[]) {
   
     /* Allocate the arrays of the four matrixes */
 
-    matrixA.rows = (float*) aligned_alloc(32, (matrixA.height * matrixA.width) * sizeof(float));
-    matrixB.rows = (float*) aligned_alloc(32, (matrixB.height * matrixB.width) * sizeof(float));
-    matrixC.rows = (float*) aligned_alloc(32, (matrixA.height * matrixB.width) * sizeof(float));
+    matrixA.rows = (float*) malloc((matrixA.height * matrixA.width) * sizeof(float));
+    matrixB.rows = (float*) malloc((matrixB.height * matrixB.width) * sizeof(float));
+    matrixC.rows = (float*) malloc((matrixA.height * matrixB.width) * sizeof(float));
 
     /*Checks allocations*/
     if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
@@ -157,6 +159,23 @@ int main(int argc, char *argv[]) {
     inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
 
     set_grid_size(threads_per_block,max_blocks_per_grid);
+
+    //talvez tenha q alocar aqui com CUDA
+    cudaError = cudaMalloc(&A, (matrixA.d_rows)*sizeof(float));
+
+    // check cudaMalloc memory allocation
+    if (cudaError != cudaSuccess) {
+	    printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+        return 0;
+    }
+
+    cudaError = cudaMalloc(&B,(matrixB.d_rows)*sizeof(float));
+
+    // check cudaMalloc memory allocation
+    if (cudaError != cudaSuccess) {
+	    printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+        return 0;
+    }
 
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
@@ -212,9 +231,13 @@ int main(int argc, char *argv[]) {
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
+    cudaFree(d_x);
+    cudaFree(d_y);
     free(matrixA.rows);
     free(matrixB.rows);
     free(matrixC.rows);
+
+    //talvez tenha q dar free nos arrays de CUDA
 
     // Mark overall stop time
     gettimeofday(&overall_t2, NULL);

@@ -10,7 +10,7 @@ Ana Luiza Pinto Marques - 2211960*/
 /*Onde:
 height = número de linhas da matriz (múltiplo de 8)
 width = número de colunas da matriz (múltiplo de 8)
-rows = sequência de linhas da matriz (height*width elementos)
+h_rows = sequência de linhas da matriz (height*width elementos alocados no host)
 d_rows = sequência de linhas da matriz (height*width elementos alocados no device)
 alloc_mode = FULL_ALLOC (valor inteiro 1) ou PARTIAL_ALLOC (valor inteiro 0)*/
 
