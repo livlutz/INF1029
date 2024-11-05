@@ -4,7 +4,7 @@ Ana Luiza Pinto Marques - 2211960*/
 #include "matrix_lib.h"
 #include "timer.h"
 
-static int NUMTHREADS;
+static THREADS_PER_BLOCK, MAX_BLOCKS_PER_GRID
 
 /*Essa função recebe um valor escalar e uma matriz como argumentos de entrada e calcula o
 produto do valor escalar pela matriz. O resultado da operação deve ser retornado na matriz
@@ -17,61 +17,23 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
         return 0;
     }
 
-    //cria e da join das threads
-    int tam_arr = matrix->height * matrix->width;
-    pthread_t threads[NUMTHREADS];
-    struct thread_data thread_data_array[NUMTHREADS];
+    //verificar isso !!
 
-    int slice = tam_arr/NUMTHREADS;
-    pthread_attr_t attr;
-    void* status;
-    int rc;
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.d_x;
 
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-
-    for(int i = 0; i< NUMTHREADS;i++){
-        thread_data_array[i].thread_id = i;
-        thread_data_array[i].offset_ini =  thread_data_array[i].thread_id * slice;
-        thread_data_array[i].offset_fim =  thread_data_array[i].offset_ini + slice; 
-        thread_data_array[i].a = matrix;
-        thread_data_array[i].scalar = scalar_value;
-        pthread_create(&threads[i],&attr,scalar_matrix_thread,(void *)&thread_data_array[i]);
-    }
-    
-    for(int t = 0; t < NUMTHREADS;t++){
-        rc = pthread_join(threads[t],&status);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
+    if(index == 0){
+      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
     }
 
-    pthread_attr_destroy(&attr);
+    for (int i = index; i < n; i += stride) {
+        matrix.d_rows[i] *= scalar_value;
+    }
 
     return 1;
 
 }
 
-void* scalar_matrix_thread(void* threadarg){
-    //faz a multiplicacao
-
-    //pega a qtd de linhas / num de threads = N da conta
-
-    struct thread_data *my_data;
-    my_data = (struct thread_data*) threadarg;
-
-    __m256 scalar = _mm256_set1_ps(my_data->scalar);
-
-    for(int i = my_data->offset_ini; i < my_data->offset_fim; i += 8){
-        __m256 row = _mm256_load_ps(&my_data->a->rows[i]);
-        __m256 result = _mm256_mul_ps(row,scalar);
-        _mm256_store_ps(&my_data->a->rows[i],result);
-    }
-
-    pthread_exit(NULL);
-}
 
 /*Essa função recebe 3 matrizes como argumentos de entrada e calcula o valor do produto da
 matriz A pela matriz B. O resultado da operação deve ser retornado na matriz C. Em caso
@@ -79,76 +41,10 @@ de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
 
 int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
 
-    //gerencia as threads (create e join) e chama a função da conta
-
     if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
         printf("Erro de dimensao ou alocacao\n");
         return 0;
     }
-
-    //cria e da join das threads
-    int tam_arr = matrixC->height * matrixC->width;
-    pthread_t threads[NUMTHREADS];
-    struct thread_data thread_data_array[NUMTHREADS], aux;
-
-    int slice = tam_arr/NUMTHREADS;
-    pthread_attr_t attr;
-    void* status;
-    int rc;
-
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-
-    for (int i = 0; i < NUMTHREADS; i++) {
-        aux.thread_id = i;
-        aux.offset_ini = aux.thread_id * slice;
-        aux.offset_fim = aux.offset_ini + slice;
-        aux.a = matrixA;
-        aux.b = matrixB;
-        aux.c = matrixC;
-
-        // Copia o conteúdo de 'aux' de volta para thread_data_array[i]
-        thread_data_array[i] = aux;
-
-        pthread_create(&threads[i], &attr, matrix_matrix_mult_thread, (void *)&thread_data_array[i]);
-    }
-    
-    for(int t = 0; t < NUMTHREADS;t++){
-        rc = pthread_join(threads[t],&status);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
-    }
-
-    pthread_attr_destroy(&attr);
-
-    return 1;
-}
-
-void* matrix_matrix_mult_thread(void* threadarg) {
-    // Faz a multiplicação de matrizes
-    struct thread_data *my_data;
-    my_data = (struct thread_data*) threadarg;
-    
-    float *a_rows = my_data->a->rows;  // Ponteiro base da matriz A
-    float *b_rows = my_data->b->rows;  // Ponteiro base da matriz B
-    float *c_rows = my_data->c->rows;  // Ponteiro base da matriz C
-
-    int a_width = my_data->a->width;   // Largura da matriz A (número de colunas)
-    int b_width = my_data->b->width;   // Largura da matriz B (número de colunas)
-    int c_width = my_data->c->width;   // Largura da matriz C (número de colunas)
-
-    float* a_row, *b_row, *c_row;
-
-    int indexA, indexB, indexC;
-
-    __m256 valA, rowB, rowC, result;
-
-    int linhas_por_thread = my_data->c->height / NUMTHREADS;
-    int linha_inicio = my_data->thread_id * linhas_por_thread;
-    int linha_fim = (my_data->thread_id == NUMTHREADS - 1) ? my_data->c->height : linha_inicio + linhas_por_thread;
 
     for (int i = linha_inicio; i < linha_fim; i++) {  // i itera sobre as linhas da matriz C
         indexC = i * c_width; 
@@ -174,16 +70,29 @@ void* matrix_matrix_mult_thread(void* threadarg) {
             }
         }
     }
+    
 
-    pthread_exit(NULL);
+    return 1;
 }
 
-
-void set_number_threads(int num_threads){
-
-    NUMTHREADS = num_threads;
-}
+/*Essa função recebe o número de threads por bloco e o número máximo de blocos por grid
+que devem ser usados como parâmetros para disparar os threads (funções kernel) em
+paralelo durante o processamento das operações aritméticas com as matrizes e deve ser
+chamada pelo programa principal antes das outras funções*/
+/*1024 para o número de
+threads por bloco e 65535 para o número de blocos por grid. Os valores limites para a
+GPGPU NVIDIA GeForce RTX 4070 Ti são 1024 para o número de threads por bloco e
+2147483647 para o número de blocos por grid.*/
 
 int set_grid_size(int threads_per_block, int max_blocks_per_grid){
+
+    // tem q saber qual é a gpu sendo usada pra testar o max!!
+    if((threads_per_block > 1024) && (max_blocks_per_grid > 65535 || max_blocks_per_grid > 2147483647)){
+        return 0;
+    }
+
+    THREADS_PER_BLOCK = threads_per_block;
+    MAX_BLOCKS_PER_GRID = max_blocks_per_grid;
+
     return 1;
 }

@@ -22,21 +22,9 @@ struct matrix {
     int alloc_mode;
 };
 
-struct thread_data {
-   long thread_id;
-   struct matrix* a;
-   struct matrix* b;
-   struct matrix* c;
-   int  offset_ini;
-   int  offset_fim;
-   int scalar;
-};
-
 int scalar_matrix_mult(float scalar_value, struct matrix *matrix);
 
 int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC);
-
-void set_number_threads(int num_threads);
 
 void* scalar_matrix_thread(void* threadarg);
 
