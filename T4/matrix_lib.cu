@@ -46,6 +46,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
+    //ver como q faz isso com CUDA
     for (int i = linha_inicio; i < linha_fim; i++) {  // i itera sobre as linhas da matriz C
         indexC = i * c_width; 
         indexA = i * a_width;                       // Índice base da linha i de C

@@ -6,12 +6,18 @@ Ana Luiza Pinto Marques - 2211960*/
 #include <math.h>
 #include <string.h>
 #include <errno.h>
+#include <cuda_runtime.h>
+extern "C" {
 #include "timer.h"
+}
 #include "matrix_lib.h"
 
 float scalar_value = 0.0f;
 
 struct matrix matrixA, matrixB, matrixC;
+
+#define THREADS_PER_BLOCK 256
+#define MAX_BLOCKS_PER_GRID 4096
 
 int store_matrix(struct matrix *matrix, char *filename) {
     FILE* arq = fopen(filename, "wb");
@@ -94,18 +100,20 @@ int check_errors(struct matrix *matrix, float scalar_value) {
 }
 
 int main(int argc, char *argv[]) {
-    unsigned long int DimA_M, DimA_N, DimB_M, DimB_N;
     char *matrixA_filename, *matrixB_filename, *result1_filename, *result2_filename;
     char *eptr = NULL;
     struct timeval start, stop, overall_t1, overall_t2;
-    int carregaA, carregaB, inicializaC,NumThreads;
+    int carregaA, carregaB, inicializaC,NumThreads,threads_per_block,max_blocks_per_grid;
 
     // Mark overall start time
     gettimeofday(&overall_t1, NULL);
 
+    // Disable buffering entirely
+    setbuf(stdout, NULL);
+
     // Check arguments
-    if (argc != 11) {
-            printf("Usage: %s <scalar_value> <DimA_M> <DimA_N> <DimB_M> <DimB_N> <NumThreads> <matrixA_filename> <matrixB_filename> <result1_filename> <result2_filename>\n", argv[0]);
+    if (argc != 13) {
+            printf("Usage: %s <scalar_value> <DimA_M> <DimA_N> <DimB_M> <DimB_N> <NumThreadsBloco> <MaxBlocoGrid> <QtdMaxMem> <matrixA_filename> <matrixB_filename> <result1_filename> <result2_filename>\n", argv[0]);
             return 0;
     }
 
@@ -116,6 +124,8 @@ int main(int argc, char *argv[]) {
     matrixB.height = strtol(argv[4], &eptr, 10);
     matrixB.width = strtol(argv[5], &eptr, 10);
     NumThreads = strtof(argv[6], &eptr);
+    threads_per_block = strtof(argv[7],&eptr);
+    max_blocks_per_grid = strof(argv[8],&eptr);
     matrixC.height = matrixA.height;
     matrixC.width = matrixB.width;
 
@@ -146,7 +156,7 @@ int main(int argc, char *argv[]) {
 
     inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
 
-    set_number_threads(NumThreads);
+    set_grid_size(threads_per_block,max_blocks_per_grid);
 
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
