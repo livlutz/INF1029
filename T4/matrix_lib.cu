@@ -183,3 +183,7 @@ void set_number_threads(int num_threads){
 
     NUMTHREADS = num_threads;
 }
+
+int set_grid_size(int threads_per_block, int max_blocks_per_grid){
+    return 1;
+}
