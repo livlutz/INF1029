@@ -162,22 +162,34 @@ int main(int argc, char *argv[]) {
 
     set_grid_size(threads_per_block,max_blocks_per_grid);
 
-    //talvez tenha q alocar aqui com CUDA
-    cudaError = cudaMalloc(&A,(matrixA.height * matrixA.width)*sizeof(float));
+    if(matrixA.alloc_mode == 0){
 
-    // check cudaMalloc memory allocation
-    if (cudaError != cudaSuccess) {
-	    printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-        return 0;
     }
 
-    cudaError = cudaMalloc(&B,(matrixB.height * matrixB.width)*sizeof(float));
+    else{
+        cudaError = cudaMalloc(&A,(matrixA.height * matrixA.width)*sizeof(float));
 
-    // check cudaMalloc memory allocation
-    if (cudaError != cudaSuccess) {
-	    printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-        return 0;
+        // check cudaMalloc memory allocation
+        if (cudaError != cudaSuccess) {
+            printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 0;
+        }
     }
+
+    if(matrixB.alloc_mode == 0){
+
+    }
+
+    else{
+        cudaError = cudaMalloc(&B,(matrixB.height * matrixB.width)*sizeof(float));
+
+        // check cudaMalloc memory allocation
+        if (cudaError != cudaSuccess) {
+            printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 0;
+        }
+    }
+
 
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);

@@ -103,7 +103,7 @@ GPGPU NVIDIA GeForce RTX 4070 Ti são 1024 para o número de threads por bloco e
 int set_grid_size(int threads_per_block, int max_blocks_per_grid){
 
     // tem q saber qual é a gpu sendo usada pra testar o max!!
-    if((threads_per_block > 1024) && (max_blocks_per_grid > 65535 || max_blocks_per_grid > 2147483647)){
+    if((threads_per_block > 1024) && (max_blocks_per_grid > 2147483647)){
         return 0;
     }
 
