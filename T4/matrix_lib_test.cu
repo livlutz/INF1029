@@ -104,9 +104,8 @@ int main(int argc, char *argv[]) {
     char *matrixA_filename, *matrixB_filename, *result1_filename, *result2_filename;
     char *eptr = NULL;
     struct timeval start, stop, overall_t1, overall_t2;
-    int carregaA, carregaB, inicializaC,NumThreads,threads_per_block,max_blocks_per_grid;
+    int carregaA, carregaB, inicializaC,max_mem_gpu,threads_per_block,max_blocks_per_grid,loop_limit,chunk_size,somaTotalMemMatriz,somaTotalMemB;
     cudaError_t cudaError;
-    float*A,*B,*C;
 
     // Mark overall start time
     gettimeofday(&overall_t1, NULL);
@@ -126,9 +125,9 @@ int main(int argc, char *argv[]) {
     matrixA.width = strtol(argv[3], &eptr, 10);
     matrixB.height = strtol(argv[4], &eptr, 10);
     matrixB.width = strtol(argv[5], &eptr, 10);
-    NumThreads = strtol(argv[6], &eptr, 10);
-    threads_per_block = strtol(argv[7], &eptr, 10);
-    max_blocks_per_grid = strtol(argv[8], &eptr, 10);
+    threads_per_block = strtol(argv[6], &eptr, 10);
+    max_blocks_per_grid = strtol(argv[7], &eptr, 10);
+    max_mem_gpu = strtol(argv[8], &eptr, 10);
 
     matrixC.height = matrixA.height;
     matrixC.width = matrixB.width;
@@ -148,6 +147,25 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
+    //Alocando as matrizes na GPU
+    cudaError = cudaMalloc(&matrixA.d_rows, (matrixA.height * matrixA.width) * sizeof(float));
+    if (cudaError != cudaSuccess) {
+        printf("cudaMalloc matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+        return 1;
+    }
+
+    cudaError = cudaMalloc(&matrixB.d_rows, (matrixB.height * matrixB.width) * sizeof(float));
+    if (cudaError != cudaSuccess) {
+        printf("cudaMalloc matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+        return 1;
+    }
+
+    cudaError = cudaMalloc(&matrixC.d_rows, (matrixC.height * matrixC.width) * sizeof(float));
+    if (cudaError != cudaSuccess) {
+        printf("cudaMalloc matrixC.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+        return 1;
+    }
+
     /* Initialize the three matrixes */
     carregaA = load_matrix(&matrixA, argv[7]);
     carregaB = load_matrix(&matrixB, argv[8]);
@@ -162,34 +180,40 @@ int main(int argc, char *argv[]) {
 
     set_grid_size(threads_per_block,max_blocks_per_grid);
 
-    if(matrixA.alloc_mode == 0){
+    somaTotalMemMatriz = matrixA.height * matrixA.width * sizeof(float) + matrixB.height * matrixB.width * sizeof(float) + matrixC.height * matrixC.width * sizeof(float);
+    somaTotalMemB = matrixB.height * matrixB.width * sizeof(float);
 
+    /*Se for viável fazer a alocação completa da três matrizes na CPU e na GPGPU, o programa deve
+    atribuir o valor FULL_ALLOCATION no campo alloc_mode da três matrizes.
+
+    Se não for viável fazer a alocação simultânea e completa das matrizes A, B e C na GPGPU, o
+    programa deve tentar alocar simultaneamente a matriz B por completo e o equivalente a uma das
+    linhas da matriz A e uma das linhas da matriz C na GPGPU. Se tiver sucesso nessa alocação, o
+    programa deve atribuir o valor FULL_ALLOCATION no campo alloc_mode da matriz B e o valor
+    PARTIAL_ALLOC no campo alloc_mode das matrizes A e C.
+
+    Se não for viável fazer a alocação completa da matriz B e a alocação parcial das matrizes A e C
+    simultaneamente na GPGPU, o programa principal deve emitir uma notificação de erro de alocação
+    de memória na GPGPU e encerrar sua execução.*/
+
+    if(max_mem_gpu >= somaTotalMemMatriz){
+        matrixA.alloc_mode = 1;
+        matrixB.alloc_mode = 1;
+        matrixC.alloc_mode = 1;
+    }
+
+    else if(max_mem_gpu < somaTotalMemMatriz && max_mem_gpu >= somaTotalMemB){
+        matrixA.alloc_mode = 0;
+        matrixB.alloc_mode = 1;
+        matrixC.alloc_mode = 0;
     }
 
     else{
-        cudaError = cudaMalloc(&A,(matrixA.height * matrixA.width)*sizeof(float));
-
-        // check cudaMalloc memory allocation
-        if (cudaError != cudaSuccess) {
-            printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-            return 0;
-        }
+        printf("Erro de alocação de memória na GPGPU\n");
+        return 0;
     }
 
-    if(matrixB.alloc_mode == 0){
-
-    }
-
-    else{
-        cudaError = cudaMalloc(&B,(matrixB.height * matrixB.width)*sizeof(float));
-
-        // check cudaMalloc memory allocation
-        if (cudaError != cudaSuccess) {
-            printf("cudaMalloc d_x returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-            return 0;
-        }
-    }
-
+    
 
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
@@ -212,7 +236,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-     /* Calculate the product between matrix A and matrix B */
+    /* Calculate the product between matrix A and matrix B */
     printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
     gettimeofday(&start, NULL);
     if (!matrix_matrix_mult(&matrixA, &matrixB, &matrixC)) {
@@ -245,8 +269,9 @@ int main(int argc, char *argv[]) {
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
-    cudaFree(A);
-    cudaFree(B);
+    cudaFree(matrixA.d_rows);
+    cudaFree(matrixB.d_rows);
+    cudaFree(matrixC.d_rows);
     free(matrixA.h_rows);
     free(matrixB.h_rows);
     free(matrixC.h_rows);
