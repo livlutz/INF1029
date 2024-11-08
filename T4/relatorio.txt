@@ -60,4 +60,30 @@ Vulnerabilities:
   Srbds:                  Not affected
   Tsx async abort:        Not affected
 
-Saida do gpu detect:
+Saida do gpu detect (lspci):
+
+00:00.0 Host bridge: Intel Corporation 12th Gen Core Processor Host Bridge (rev 05)
+00:01.0 PCI bridge: Intel Corporation 12th Gen Core Processor PCI Express x16 Controller #1 (rev 05)
+00:0a.0 Signal processing controller: Intel Corporation Platform Monitoring Technology (rev 01)
+00:0e.0 RAID bus controller: Intel Corporation Volume Management Device NVMe RAID Controller
+00:14.0 USB controller: Intel Corporation Alder Lake-S PCH USB 3.2 Gen 2x2 XHCI Controller (rev 11)
+00:14.2 RAM memory: Intel Corporation Alder Lake-S PCH Shared SRAM (rev 11)
+00:15.0 Serial bus controller: Intel Corporation Alder Lake-S PCH Serial IO I2C Controller #0 (rev 11)
+00:15.1 Serial bus controller: Intel Corporation Alder Lake-S PCH Serial IO I2C Controller #1 (rev 11)
+00:15.2 Serial bus controller: Intel Corporation Alder Lake-S PCH Serial IO I2C Controller #2 (rev 11)
+00:16.0 Communication controller: Intel Corporation Alder Lake-S PCH HECI Controller #1 (rev 11)
+00:17.0 SATA controller: Intel Corporation Alder Lake-S PCH SATA Controller [AHCI Mode] (rev 11)
+00:1a.0 PCI bridge: Intel Corporation Alder Lake-S PCH PCI Express Root Port #25 (rev 11)
+00:1c.0 PCI bridge: Intel Corporation Alder Lake-S PCH PCI Express Root Port #1 (rev 11)
+00:1c.2 PCI bridge: Intel Corporation Alder Lake-S PCH PCI Express Root Port #3 (rev 11)
+00:1c.4 PCI bridge: Intel Corporation Alder Lake-S PCH PCI Express Root Port #5 (rev 11)
+00:1f.0 ISA bridge: Intel Corporation Device 7a86 (rev 11)
+00:1f.3 Audio device: Intel Corporation Alder Lake-S HD Audio Controller (rev 11)
+00:1f.4 SMBus: Intel Corporation Alder Lake-S PCH SMBus Controller (rev 11)
+00:1f.5 Serial bus controller: Intel Corporation Alder Lake-S PCH SPI Controller (rev 11)
+01:00.0 VGA compatible controller: NVIDIA Corporation AD104 [GeForce RTX 4070 Ti] (rev a1)
+01:00.1 Audio device: NVIDIA Corporation Device 22bc (rev a1)
+02:00.0 Non-Volatile memory controller: ADATA Technology Co., Ltd. XPG SX8200 Pro PCIe Gen3x4 M.2 2280 Solid State Drive (rev 03)
+03:00.0 USB controller: ASMedia Technology Inc. ASM2142/ASM3142 USB 3.1 Host Controller
+04:00.0 Ethernet controller: Realtek Semiconductor Co., Ltd. RTL8125 2.5GbE Controller (rev 05)
+05:00.0 Network controller: Intel Corporation Wireless 7260 (rev cb)

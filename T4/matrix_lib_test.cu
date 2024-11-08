@@ -11,6 +11,7 @@ extern "C" {
 #include "timer.h"
 }
 #include "matrix_lib.h"
+#include <immintrin.h>
 
 float scalar_value = 0.0f;
 
@@ -26,7 +27,7 @@ int store_matrix(struct matrix *matrix, char *filename) {
         printf("Erro ao abrir o arquivo para escrita\n");
         return 0;
     }
-    int qtd = fwrite(matrix->rows, sizeof(float), matrix->height*matrix->width, arq);
+    int qtd = fwrite(matrix->h_rows, sizeof(float), matrix->height*matrix->width, arq);
 
     if(qtd != matrix->height*matrix->width){
         printf("Erro ao escrever no arquivo\n");
@@ -46,7 +47,7 @@ int load_matrix(struct matrix *matrix, char *filename) {
         return 0;
     }
 
-    int qtd = fread(matrix->rows, sizeof(float), matrix->height*matrix->width, arq);
+    int qtd = fread(matrix->h_rows, sizeof(float), matrix->height*matrix->width, arq);
 
     if(qtd != matrix->height*matrix->width){
         printf("Erro ao ler o arquivo\n");
@@ -63,7 +64,7 @@ int initialize_matrix(struct matrix *matrix, float value, float inc) {
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
             ind = i * matrix->height + j;
-            matrix->rows[ind] = value;
+            matrix->h_rows[ind] = value;
             value += inc;
         }
     }
@@ -78,7 +79,7 @@ int print_matrix(struct matrix *matrix) {
 		        printf("Ooops...256 printing limit found...skipping printing...\n");
 		        return 1;
 	        }	
-            printf("%f ", matrix->rows[i * matrix->height + j]);
+            printf("%f ", matrix->h_rows[i * matrix->height + j]);
         }
         printf("\n");
     }
@@ -89,8 +90,8 @@ int print_matrix(struct matrix *matrix) {
 int check_errors(struct matrix *matrix, float scalar_value) {
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
-            if(matrix->rows[i * matrix->height + j] != scalar_value){
-                printf("Matrix error\nExpected value : %f\nReceived value:%f\n", scalar_value, matrix->rows[i * matrix->height + j]);
+            if(matrix->h_rows[i * matrix->height + j] != scalar_value){
+                printf("Matrix error\nExpected value : %f\nReceived value:%f\n", scalar_value, matrix->h_rows[i * matrix->height + j]);
                 return 0;
             }
         }
@@ -125,9 +126,10 @@ int main(int argc, char *argv[]) {
     matrixA.width = strtol(argv[3], &eptr, 10);
     matrixB.height = strtol(argv[4], &eptr, 10);
     matrixB.width = strtol(argv[5], &eptr, 10);
-    NumThreads = strtof(argv[6], &eptr);
-    threads_per_block = strtof(argv[7],&eptr);
-    max_blocks_per_grid = strof(argv[8],&eptr);
+    NumThreads = strtol(argv[6], &eptr, 10);
+    threads_per_block = strtol(argv[7], &eptr, 10);
+    max_blocks_per_grid = strtol(argv[8], &eptr, 10);
+
     matrixC.height = matrixA.height;
     matrixC.width = matrixB.width;
 
@@ -136,12 +138,12 @@ int main(int argc, char *argv[]) {
   
     /* Allocate the arrays of the four matrixes */
 
-    matrixA.rows = (float*) malloc((matrixA.height * matrixA.width) * sizeof(float));
-    matrixB.rows = (float*) malloc((matrixB.height * matrixB.width) * sizeof(float));
-    matrixC.rows = (float*) malloc((matrixA.height * matrixB.width) * sizeof(float));
+    matrixA.h_rows = (float*) malloc((matrixA.height * matrixA.width) * sizeof(float));
+    matrixB.h_rows = (float*) malloc((matrixB.height * matrixB.width) * sizeof(float));
+    matrixC.h_rows = (float*) malloc((matrixA.height * matrixB.width) * sizeof(float));
 
     /*Checks allocations*/
-    if(matrixA.rows == NULL || matrixB.rows == NULL || matrixC.rows == NULL){
+    if(matrixA.h_rows == NULL || matrixB.h_rows == NULL || matrixC.h_rows == NULL){
         printf("Erro ao alocar memoria\n");
         return 0;
     }
@@ -161,7 +163,7 @@ int main(int argc, char *argv[]) {
     set_grid_size(threads_per_block,max_blocks_per_grid);
 
     //talvez tenha q alocar aqui com CUDA
-    cudaError = cudaMalloc(&A, (matrixA.d_rows)*sizeof(float));
+    cudaError = cudaMalloc(&A,(matrixA.height * matrixA.width)*sizeof(float));
 
     // check cudaMalloc memory allocation
     if (cudaError != cudaSuccess) {
@@ -169,7 +171,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    cudaError = cudaMalloc(&B,(matrixB.d_rows)*sizeof(float));
+    cudaError = cudaMalloc(&B,(matrixB.height * matrixB.width)*sizeof(float));
 
     // check cudaMalloc memory allocation
     if (cudaError != cudaSuccess) {
@@ -231,11 +233,11 @@ int main(int argc, char *argv[]) {
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
-    cudaFree(d_x);
-    cudaFree(d_y);
-    free(matrixA.rows);
-    free(matrixB.rows);
-    free(matrixC.rows);
+    cudaFree(A);
+    cudaFree(B);
+    free(matrixA.h_rows);
+    free(matrixB.h_rows);
+    free(matrixC.h_rows);
 
     //talvez tenha q dar free nos arrays de CUDA
 

@@ -7,9 +7,11 @@ Ana Luiza Pinto Marques - 2211960*/
 static int THREADS_PER_BLOCK, MAX_BLOCKS_PER_GRID;
 
 /*Essa função recebe um valor escalar e uma matriz como argumentos de entrada e calcula o
-produto do valor escalar pela matriz. O resultado da operação deve ser retornado na matriz
-de entrada. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a
-função deve retornar 0*/
+produto do valor escalar pela matriz utilizando CUDA. Cada função kernel deve calcular o
+resultado do produto entre o valor escalar e um dos elementos da matriz (ou mais de um
+elemento se o dataset for maior que o número de threads do GRID). O resultado da
+operação deve ser retornado na matriz de entrada. Em caso de sucesso, a função deve
+retornar o valor 1. Em caso de erro, a função deve retornar 0.*/
 
 int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
     
@@ -17,27 +19,27 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
         return 0;
     }
 
-    //verificar isso !!
-
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.d_x;
+    int index = blockIdx.x * blockDim.x + threadIdx.x;;
+    int stride = blockDim.x * gridDim.x;
 
     if(index == 0){
       printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
     }
 
-    for (int i = index; i < n; i += stride) {
-        matrix->h_rows[i] *= scalar_value;
+    for(int i = index;i < (matrix->height * matrix->width); i += stride){
+        matrix->d_rows[i] *= scalar_value;
     }
 
     return 1;
 
 }
 
-
 /*Essa função recebe 3 matrizes como argumentos de entrada e calcula o valor do produto da
-matriz A pela matriz B. O resultado da operação deve ser retornado na matriz C. Em caso
-de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve retornar 0.*/
+matriz A pela matriz B utilizando CUDA. Cada função kernel deve calcular o resultado
+referente a um dos elementos da matriz C (ou mais de um elemento se o dataset for maior
+que o número de threads do GRID). O resultado da operação deve ser retornado na matriz
+C. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
+retornar 0*/
 
 int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
 
@@ -46,33 +48,46 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
-    //ver como q faz isso com CUDA
-    for (int i = linha_inicio; i < linha_fim; i++) {  // i itera sobre as linhas da matriz C
-        indexC = i * c_width; 
-        indexA = i * a_width;                       // Índice base da linha i de C
-        c_row = &c_rows[indexC];                 // Ponteiro direto para a linha i de C
-        a_row = &a_rows[indexA];                 // Ponteiro direto para a linha i de A
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.x;
 
-        for (int j = 0; j < a_width; j++) {           // Itera sobre as colunas da matriz A
-            valA = _mm256_set1_ps(a_row[j]);          // Carrega o valor de A para multiplicar com a linha de B
-            indexB = j * b_width;
-            b_row = &b_rows[indexB];             // Ponteiro direto para a linha j de B
+    int indexA, indexB, indexC;
+    float valA;
+    float*rowB,*rowC,result;
 
-            for (int k = 0; k < b_width; k += 8) {    // Itera sobre as colunas da matriz B e processa 8 elementos por vez
-                // Carrega 8 elementos de B e C para o cálculo 
-                rowB = _mm256_load_ps(&b_row[k]);     // Carrega 8 elementos da linha de B
-                rowC = _mm256_load_ps(&c_row[k]);     // Carrega 8 elementos da linha de C
 
-                // Multiplica cada elemento da linha de A pelo elemento correspondente da coluna de B e acumula em C
-                result = _mm256_fmadd_ps(rowB, valA, rowC);
+    if(index == 0){
+      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
+    }
 
-                // Armazena o resultado na linha i de C
-                _mm256_store_ps(&c_row[k], result);
+    for(int i = index; i < matrixC->height; i += stride){
+
+        for(int j = 0; j < matrixA->width;j++){
+
+            indexA = i * matrixA->width + j;
+
+            valA = matrixA->d_rows[indexA];
+
+            for (int k = 0; k < matrixB->width; k ++){
+                //Calcula posicao inicial do indice da matrizB
+                indexB = j * matrixB->width + k;
+
+                //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
+                indexC = i * matrixC->width + k;
+
+                //Calcula o valor da linha da matrizB
+                rowB = &matrixB->d_rows[indexB];
+
+                //Calcula o valor da linha da matrizC
+                rowC = &matrixC->d_rows[indexC];
+
+                rowC[k] += valA * rowB[k];
+
             }
         }
+        
     }
     
-
     return 1;
 }
 
