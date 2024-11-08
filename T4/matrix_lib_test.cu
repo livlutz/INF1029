@@ -134,6 +134,13 @@ int main(int argc, char *argv[]) {
 
     result1_filename = argv[9];
     result2_filename = argv[10];
+
+    int limite = set_grid_size(threads_per_block,max_blocks_per_grid);
+
+    if(limite == 0){
+        printf("Erro ao setar o tamanho do grid\n");
+        return 0;
+    }
   
     /* Allocate the arrays of the four matrixes */
 
@@ -178,42 +185,85 @@ int main(int argc, char *argv[]) {
 
     inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
 
-    set_grid_size(threads_per_block,max_blocks_per_grid);
-
     somaTotalMemMatriz = matrixA.height * matrixA.width * sizeof(float) + matrixB.height * matrixB.width * sizeof(float) + matrixC.height * matrixC.width * sizeof(float);
     somaTotalMemB = matrixB.height * matrixB.width * sizeof(float);
 
     /*Se for viável fazer a alocação completa da três matrizes na CPU e na GPGPU, o programa deve
     atribuir o valor FULL_ALLOCATION no campo alloc_mode da três matrizes.
-
-    Se não for viável fazer a alocação simultânea e completa das matrizes A, B e C na GPGPU, o
-    programa deve tentar alocar simultaneamente a matriz B por completo e o equivalente a uma das
-    linhas da matriz A e uma das linhas da matriz C na GPGPU. Se tiver sucesso nessa alocação, o
-    programa deve atribuir o valor FULL_ALLOCATION no campo alloc_mode da matriz B e o valor
-    PARTIAL_ALLOC no campo alloc_mode das matrizes A e C.
-
-    Se não for viável fazer a alocação completa da matriz B e a alocação parcial das matrizes A e C
-    simultaneamente na GPGPU, o programa principal deve emitir uma notificação de erro de alocação
-    de memória na GPGPU e encerrar sua execução.*/
-
+    */
     if(max_mem_gpu >= somaTotalMemMatriz){
         matrixA.alloc_mode = 1;
         matrixB.alloc_mode = 1;
         matrixC.alloc_mode = 1;
     }
 
+    /* Se não for viável fazer a alocação simultânea e completa das matrizes A, B e C na GPGPU, o
+    programa deve tentar alocar simultaneamente a matriz B por completo e o equivalente a uma das
+    linhas da matriz A e uma das linhas da matriz C na GPGPU. Se tiver sucesso nessa alocação, o
+    programa deve atribuir o valor FULL_ALLOCATION no campo alloc_mode da matriz B e o valor
+    PARTIAL_ALLOC no campo alloc_mode das matrizes A e C.
+    */
     else if(max_mem_gpu < somaTotalMemMatriz && max_mem_gpu >= somaTotalMemB){
+        
+        //Alocando a matriz B na GPU por completo
+        cudaError = cudaMemcpy(matrixB.d_rows, matrixB.h_rows, (matrixB.height * matrixB.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+
+        //alocando 1 linha de A na GPU
+        for(int i = 0; i < matrixA.width; i++){
+            cudaError = cudaMemcpy(matrixA.d_rows + i, matrixA.h_rows + i, sizeof(float), cudaMemcpyHostToDevice);
+            if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+            }
+        }
+
+        //alocando 1 linha de C na GPU
+        for(int j = 0;j < matrixC.width;j++){
+            cudaError = cudaMemcpy(matrixC.d_rows + j, matrixC.h_rows + j, sizeof(float), cudaMemcpyHostToDevice);
+            if (cudaError != cudaSuccess) {
+                printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+                return 1;
+            }
+        }
+
         matrixA.alloc_mode = 0;
         matrixB.alloc_mode = 1;
         matrixC.alloc_mode = 0;
     }
 
+    /*Se não for viável fazer a alocação completa da matriz B e a alocação parcial das matrizes A e C
+    simultaneamente na GPGPU, o programa principal deve emitir uma notificação de erro de alocação
+    de memória na GPGPU e encerrar sua execução.*/
     else{
         printf("Erro de alocação de memória na GPGPU\n");
         return 0;
     }
 
-    
+    //Alocando as matrizes na GPU por completo
+
+    if(matrixA.alloc_mode == 1 && matrixB.alloc_mode == 1 && matrixC.alloc_mode == 1){
+        cudaError = cudaMemcpy(matrixA.d_rows, matrixA.h_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixA.h_rows -> matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+
+        cudaError = cudaMemcpy(matrixB.d_rows, matrixB.h_rows, (matrixB.height * matrixB.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+
+        cudaError = cudaMemcpy(matrixC.d_rows, matrixC.h_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixC.h_rows -> matrixC.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+    }
 
     /* Scalar product of matrix A */
     printf("Executing scalar_matrix_mult(%5.1f, matrixA)...\n",scalar_value);
@@ -224,6 +274,15 @@ int main(int argc, char *argv[]) {
     }
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
+
+    cudaDeviceSynchronize();
+
+    cudaError = cudaMemcpy(matrixA.h_rows, matrixA.d_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyDeviceToHost);
+    if (cudaError != cudaSuccess){
+	    printf("cudaMemcpy (d_y -> h_y) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
+	    return 1;
+    }
+
 
     /* Print matrix */
     printf("---------- Matrix A ----------\n");
@@ -245,6 +304,13 @@ int main(int argc, char *argv[]) {
     }
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
+
+    cudaDeviceSynchronize();
+    cudaError = cudaMemcpy(matrixC.h_rows, matrixC.d_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyDeviceToHost);
+    if (cudaError != cudaSuccess){
+        printf("cudaMemcpy (d_y -> h_y) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
+        return 1;
+    }
 
     /* Print matrix */
     printf("---------- Matrix C ----------\n");
@@ -275,8 +341,6 @@ int main(int argc, char *argv[]) {
     free(matrixA.h_rows);
     free(matrixB.h_rows);
     free(matrixC.h_rows);
-
-    //talvez tenha q dar free nos arrays de CUDA
 
     // Mark overall stop time
     gettimeofday(&overall_t2, NULL);

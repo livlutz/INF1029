@@ -26,8 +26,8 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix);
 
 int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC);
 
-void* scalar_matrix_thread(void* threadarg);
+void scalar_mult(float scalar_value, struct matrix *matrix);
 
-void* matrix_matrix_mult_thread(void* threadarg);
+void matrix_multiply(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC);
 
 int set_grid_size(int threads_per_block, int max_blocks_per_grid);

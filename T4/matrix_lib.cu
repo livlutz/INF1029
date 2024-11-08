@@ -13,25 +13,29 @@ elemento se o dataset for maior que o número de threads do GRID). O resultado d
 operação deve ser retornado na matriz de entrada. Em caso de sucesso, a função deve
 retornar o valor 1. Em caso de erro, a função deve retornar 0.*/
 
+void scalar_mult(float scalar_value, struct matrix *matrix){
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.x;
+
+    if(index == 0){
+      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
+
+    }
+
+    for(int i = index;i < (matrix->height * matrix->width); i += stride){
+        matrix->d_rows[i] *= scalar_value;
+    }
+}
+
 int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
     
     if(matrix == NULL){
         return 0;
     }
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;;
-    int stride = blockDim.x * gridDim.x;
-
-    if(index == 0){
-      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
-    }
-
-    for(int i = index;i < (matrix->height * matrix->width); i += stride){
-        matrix->d_rows[i] *= scalar_value;
-    }
+    scalar_mult<<<MAX_BLOCKS_PER_GRID,THREADS_PER_BLOCK>>>(scalar_value,matrix);
 
     return 1;
-
 }
 
 /*Essa função recebe 3 matrizes como argumentos de entrada e calcula o valor do produto da
@@ -41,20 +45,13 @@ que o número de threads do GRID). O resultado da operação deve ser retornado 
 C. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
 retornar 0*/
 
-int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
-
-    if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
-        printf("Erro de dimensao ou alocacao\n");
-        return 0;
-    }
-
+void matrix_multiply(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
     int indexA, indexB, indexC;
     float valA;
     float*rowB,*rowC,result;
-
 
     if(index == 0){
       printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
@@ -87,7 +84,17 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         }
         
     }
-    
+}
+
+int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
+
+    if((matrixA == NULL) || (matrixB == NULL) || (matrixC == NULL) || (matrixA->width != matrixB->height) || (matrixC->height != matrixA->height) || (matrixC->width != matrixB->width) ){
+        printf("Erro de dimensao ou alocacao\n");
+        return 0;
+    }
+
+    matrix_multiply<<<MAX_BLOCKS_PER_GRID,THREADS_PER_BLOCK>>>(matrixA,matrixB,matrixC);
+   
     return 1;
 }
 
