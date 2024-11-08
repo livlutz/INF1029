@@ -35,7 +35,7 @@ int main(int argc, char **argv)
   cudaError_t cudaError;
   int i;
   struct timeval start, stop, overall_t1, overall_t2;
-  int pedaco = DATASET_SIZE/1024000
+  int pedaco = DATASET_SIZE/1024000;
 
   // Mark overall start time
   gettimeofday(&overall_t1, NULL);

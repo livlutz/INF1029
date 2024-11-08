@@ -4,7 +4,7 @@ Ana Luiza Pinto Marques - 2211960*/
 #include "matrix_lib.h"
 #include "timer.h"
 
-static THREADS_PER_BLOCK, MAX_BLOCKS_PER_GRID
+static int THREADS_PER_BLOCK, MAX_BLOCKS_PER_GRID;
 
 /*Essa função recebe um valor escalar e uma matriz como argumentos de entrada e calcula o
 produto do valor escalar pela matriz. O resultado da operação deve ser retornado na matriz
@@ -27,7 +27,7 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
     }
 
     for (int i = index; i < n; i += stride) {
-        matrix.d_rows[i] *= scalar_value;
+        matrix->h_rows[i] *= scalar_value;
     }
 
     return 1;
