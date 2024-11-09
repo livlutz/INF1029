@@ -131,8 +131,8 @@ int main(int argc, char *argv[]) {
     matrixC.height = matrixA.height;
     matrixC.width = matrixB.width;
 
-    result1_filename = argv[9];
-    result2_filename = argv[10];
+    result1_filename = argv[11];
+    result2_filename = argv[12];
 
     int limite = set_grid_size(threads_per_block,max_blocks_per_grid);
 
@@ -173,8 +173,8 @@ int main(int argc, char *argv[]) {
     }
 
     /* Initialize the three matrixes */
-    carregaA = load_matrix(&matrixA, argv[7]);
-    carregaB = load_matrix(&matrixB, argv[8]);
+    carregaA = load_matrix(&matrixA, argv[9]);
+    carregaB = load_matrix(&matrixB, argv[10]);
 
     /*Checks if matrixes were loaded correctly */
     if(carregaA == 0 || carregaB == 0){
@@ -281,7 +281,6 @@ int main(int argc, char *argv[]) {
 	    printf("cudaMemcpy (d_y -> h_y) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
 	    return 1;
     }
-
 
     /* Print matrix */
     printf("---------- Matrix A ----------\n");
