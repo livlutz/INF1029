@@ -12,7 +12,7 @@ resultado do produto entre o valor escalar e um dos elementos da matriz (ou mais
 elemento se o dataset for maior que o número de threads do GRID). O resultado da
 operação deve ser retornado na matriz de entrada. Em caso de sucesso, a função deve
 retornar o valor 1. Em caso de erro, a função deve retornar 0.*/
-
+__global__
 void scalar_mult(float scalar_value, struct matrix *matrix){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -44,7 +44,7 @@ referente a um dos elementos da matriz C (ou mais de um elemento se o dataset fo
 que o número de threads do GRID). O resultado da operação deve ser retornado na matriz
 C. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
 retornar 0*/
-
+__global__
 void matrix_multiply(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;

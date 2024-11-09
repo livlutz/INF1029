@@ -11,7 +11,6 @@ extern "C" {
 #include "timer.h"
 }
 #include "matrix_lib.h"
-#include <immintrin.h>
 
 float scalar_value = 0.0f;
 
