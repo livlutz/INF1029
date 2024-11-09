@@ -13,30 +13,32 @@ elemento se o dataset for maior que o número de threads do GRID). O resultado d
 operação deve ser retornado na matriz de entrada. Em caso de sucesso, a função deve
 retornar o valor 1. Em caso de erro, a função deve retornar 0.*/
 __global__
-void scalar_mult(float scalar_value, struct matrix *matrix){
+void scalar_mult(float scalar_value, float *d_rows, int matrix_size) {
+    
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
     if(index == 0){
-      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
-
+        printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
     }
 
-    for(int i = index;i < (matrix->height * matrix->width); i += stride){
-        matrix->d_rows[i] *= scalar_value;
+    for(int i = index; i < matrix_size; i += stride) {
+        d_rows[i] *= scalar_value;
     }
 }
 
-int scalar_matrix_mult(float scalar_value, struct matrix *matrix){
-    
-    if(matrix == NULL){
+
+int scalar_matrix_mult(float scalar_value, struct matrix *matrix) {
+    if(matrix == NULL) {
         return 0;
     }
 
-    scalar_mult<<<MAX_BLOCKS_PER_GRID,THREADS_PER_BLOCK>>>(scalar_value,matrix);
+    int matrix_size = matrix->height * matrix->width;
+    scalar_mult<<<MAX_BLOCKS_PER_GRID, THREADS_PER_BLOCK>>>(scalar_value, matrix->d_rows, matrix_size);
 
     return 1;
 }
+
 
 /*Essa função recebe 3 matrizes como argumentos de entrada e calcula o valor do produto da
 matriz A pela matriz B utilizando CUDA. Cada função kernel deve calcular o resultado
