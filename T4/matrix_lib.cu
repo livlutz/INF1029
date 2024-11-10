@@ -46,45 +46,40 @@ referente a um dos elementos da matriz C (ou mais de um elemento se o dataset fo
 que o número de threads do GRID). O resultado da operação deve ser retornado na matriz
 C. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
 retornar 0*/
+
 __global__
-void matrix_multiply(struct matrix *matrixA, struct matrix * matrixB, struct matrix * matrixC){
+void matrix_multiply(struct matrix *matrixA, struct matrix *matrixB, struct matrix *matrixC){
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
-    int indexA, indexB, indexC;
-    float valA;
-    float*rowB,*rowC,result;
-
+    // Debug para exibir valores iniciais
     if(index == 0){
-      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
+      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n", blockDim.x, gridDim.x, stride);
     }
 
-    for(int i = index; i < matrixC->height; i += stride){
+    float sum;
+    int indexA, indexB, indexC;
+    float *d_rowsA = matrixA->d_rows;
+    float *d_rowsB = matrixB->d_rows;
+    float *d_rowsC = matrixC->d_rows;
 
-        for(int j = 0; j < matrixA->width;j++){
+    // Calcular a multiplicação por bloco e por thread, onde cada thread cuida de um elemento de matrixC
+    for (int i = index; i < matrixC->height; i += stride) {
+        for (int k = 0; k < matrixC->width; k++) {
+            sum = 0.0f;
 
-            indexA = i * matrixA->width + j;
-
-            valA = matrixA->d_rows[indexA];
-
-            for (int k = 0; k < matrixB->width; k ++){
-                //Calcula posicao inicial do indice da matrizB
+            for (int j = 0; j < matrixA->width; j++) {
+                indexA = i * matrixA->width + j;
                 indexB = j * matrixB->width + k;
 
-                //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
-                indexC = i * matrixC->width + k;
-
-                //Calcula o valor da linha da matrizB
-                rowB = &matrixB->d_rows[indexB];
-
-                //Calcula o valor da linha da matrizC
-                rowC = &matrixC->d_rows[indexC];
-
-                rowC[k] += valA * rowB[k];
-
+                // Acumula o produto de A e B
+                sum += d_rowsA[indexA] * d_rowsB[indexB];
             }
+
+            // Armazena o valor final na posição (i, k) de C
+            indexC = i * matrixC->width + k;
+            d_rowsC[indexC] = sum;
         }
-        
     }
 }
 
