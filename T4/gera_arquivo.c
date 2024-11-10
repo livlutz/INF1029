@@ -10,21 +10,21 @@ int main(void){
     matrixA = fopen("floats_256_2.0f.dat", "wb");
     matrixB = fopen("floats_256_5.0f.dat", "wb");
 
-    rowsA = (float*)malloc((8 * 16)*sizeof(float));
-    rowsB = (float*)malloc((8 * 16)*sizeof(float));
+    rowsA = (float*)malloc((1024 * 1024)*sizeof(float));
+    rowsB = (float*)malloc((1024 * 1024)*sizeof(float));
 
     if(rowsA == NULL || rowsB == NULL){
         printf("Erro ao alocar memoria\n");
         return 1;
     }
 
-    for(int i = 0; i < (8 * 16);i++){
+    for(int i = 0; i < (1024 * 1024);i++){
         rowsA[i] = 2.0;
         rowsB[i] = 5.0;
     }
 
-    fwrite(rowsA, sizeof(float), (8 * 16), matrixA);
-    fwrite(rowsB, sizeof(float), (8 * 16), matrixB);
+    fwrite(rowsA, sizeof(float), (1024 * 1024), matrixA);
+    fwrite(rowsB, sizeof(float), (1024 * 1024), matrixB);
     
     fclose(matrixA);
     fclose(matrixB);
@@ -45,7 +45,7 @@ No servidor da PUC : nvcc -o matrix_lib_test matrix_lib_test.cu matrix_lib.cu ti
  
 Na minha humilde residencia : n sei ainda
 
-matrix_lib_test 5.0 8 16 16 8 256 4096 1024 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
+matrix_lib_test 5.0 1024 1024 1024 1024 256 4096 1024 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
 
 
 256 é o número de threads por bloco a serem disparadas;

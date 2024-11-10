@@ -127,6 +127,7 @@ int main(int argc, char *argv[]) {
     threads_per_block = strtol(argv[6], &eptr, 10);
     max_blocks_per_grid = strtol(argv[7], &eptr, 10);
     max_mem_gpu = strtol(argv[8], &eptr, 10);
+    max_mem_gpu = max_mem_gpu * 1024 * 1024;
 
     matrixC.height = matrixA.height;
     matrixC.width = matrixB.width;
