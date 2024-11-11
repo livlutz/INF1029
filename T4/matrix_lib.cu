@@ -48,38 +48,29 @@ C. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a fu
 retornar 0*/
 
 __global__
-void matrix_multiply(struct matrix *matrixA, struct matrix *matrixB, struct matrix *matrixC){
+void matrix_multiply(float *d_rowsA, float *d_rowsB, float *d_rowsC, unsigned long int C_height, unsigned long int A_width, unsigned long int B_width, unsigned long int C_width) {
+
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
-    //Calcular o indice da matrix C pra cada thread
-
-    // Debug para exibir valores iniciais
-    if(index == 0){
-      printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n", blockDim.x, gridDim.x, stride);
-    }
-
     float sum;
     int indexA, indexB, indexC;
-    float *d_rowsA = matrixA->d_rows;
-    float *d_rowsB = matrixB->d_rows;
-    float *d_rowsC = matrixC->d_rows;
 
     // Calcular a multiplicação por bloco e por thread, onde cada thread cuida de um elemento de matrixC
-    for (int i = index; i < matrixC->height; i += stride) {
-        for (int k = 0; k < matrixC->width; k++) {
+    for (int i = index; i < C_height; i += stride) {
+        for (int k = 0; k < A_width; k++) {
             sum = 0.0f;
 
-            for (int j = 0; j < matrixA->width; j++) {
-                indexA = i * matrixA->width + j;
-                indexB = j * matrixB->width + k;
+            for (int j = 0; j < B_width; j++) {
+                indexA = i * A_width + j;
+                indexB = j * B_width + k;
 
                 // Acumula o produto de A e B
                 sum += d_rowsA[indexA] * d_rowsB[indexB];
             }
 
             // Armazena o valor final na posição (i, k) de C
-            indexC = i * matrixC->width + k;
+            indexC = i * C_width+ k;
             d_rowsC[indexC] = sum;
         }
     }
@@ -92,7 +83,15 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
-    matrix_multiply<<<MAX_BLOCKS_PER_GRID,THREADS_PER_BLOCK>>>(matrixA,matrixB,matrixC);
+    float *d_rowsA = matrixA->d_rows;
+    float *d_rowsB = matrixB->d_rows;
+    float *d_rowsC = matrixC->d_rows;
+    unsigned long int C_height = matrixC->height;
+    unsigned long int A_width = matrixA->width;
+    unsigned long int B_width = matrixB->width;
+    unsigned long int C_width = matrixC->width;
+
+    matrix_multiply<<<MAX_BLOCKS_PER_GRID,THREADS_PER_BLOCK>>>(d_rowsA,d_rowsB,d_rowsC,C_height,A_width,B_width,C_width);
    
     return 1;
 }
@@ -108,7 +107,6 @@ GPGPU NVIDIA GeForce RTX 4070 Ti são 1024 para o número de threads por bloco e
 
 int set_grid_size(int threads_per_block, int max_blocks_per_grid){
 
-    // tem q saber qual é a gpu sendo usada pra testar o max!!
     if((threads_per_block > 1024) && (max_blocks_per_grid > 2147483647)){
         return 0;
     }

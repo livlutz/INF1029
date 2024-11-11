@@ -16,8 +16,6 @@ float scalar_value = 0.0f;
 
 struct matrix matrixA, matrixB, matrixC;
 
-#define THREADS_PER_BLOCK 256
-#define MAX_BLOCKS_PER_GRID 4096
 
 int store_matrix(struct matrix *matrix, char *filename) {
     FILE* arq = fopen(filename, "wb");
@@ -100,10 +98,10 @@ int check_errors(struct matrix *matrix, float scalar_value) {
 }
 
 int main(int argc, char *argv[]) {
-    char *matrixA_filename, *matrixB_filename, *result1_filename, *result2_filename;
+    char *result1_filename, *result2_filename;
     char *eptr = NULL;
     struct timeval start, stop, overall_t1, overall_t2;
-    int carregaA, carregaB, inicializaC,max_mem_gpu,threads_per_block,max_blocks_per_grid,loop_limit,chunk_size,somaTotalMemMatriz,somaTotalMemB;
+    int carregaA, carregaB, inicializaC,max_mem_gpu,threads_per_block,max_blocks_per_grid,somaTotalMemMatriz,somaTotalMemB;
     cudaError_t cudaError;
 
     // Mark overall start time
@@ -185,6 +183,11 @@ int main(int argc, char *argv[]) {
 
     inicializaC = initialize_matrix(&matrixC, 0.0f, 0.0f);
 
+    if(inicializaC != 1){
+        printf("Erro ao inicializar a matriz C\n");
+        return 0;
+    }
+
     somaTotalMemMatriz = matrixA.height * matrixA.width * sizeof(float) + matrixB.height * matrixB.width * sizeof(float) + matrixC.height * matrixC.width * sizeof(float);
     somaTotalMemB = matrixB.height * matrixB.width * sizeof(float);
 
@@ -216,7 +219,7 @@ int main(int argc, char *argv[]) {
         for(int i = 0; i < matrixA.width; i++){
             cudaError = cudaMemcpy(matrixA.d_rows + i, matrixA.h_rows + i, sizeof(float), cudaMemcpyHostToDevice);
             if (cudaError != cudaSuccess) {
-            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            printf("cudaMemcpy matrixA.h_rows -> matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
             return 1;
             }
         }
@@ -225,7 +228,7 @@ int main(int argc, char *argv[]) {
         for(int j = 0;j < matrixC.width;j++){
             cudaError = cudaMemcpy(matrixC.d_rows + j, matrixC.h_rows + j, sizeof(float), cudaMemcpyHostToDevice);
             if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+                printf("cudaMemcpy matrixC.h_rows -> matrixC.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
                 return 1;
             }
         }
