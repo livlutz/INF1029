@@ -53,25 +53,40 @@ void matrix_multiply(float *d_rowsA, float *d_rowsB, float *d_rowsC, unsigned lo
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
-    float sum;
     int indexA, indexB, indexC;
+    float valA,rowB,rowC,result;
 
     // Calcular a multiplicação por bloco e por thread, onde cada thread cuida de um elemento de matrixC
     for (int i = index; i < C_height; i += stride) {
-        for (int k = 0; k < A_width; k++) {
-            sum = 0.0f;
 
-            for (int j = 0; j < B_width; j++) {
-                indexA = i * A_width + j;
+        //itera por colunas da matriz A
+        for (int j = 0; j < A_width; j++) {
+
+            //Calcula posicao inicial do indice da matrizA 
+            indexA = i * A_width + j;
+
+            //valor do elemento da matriz A
+            valA = d_rowsA[indexA];
+
+            //itera por linhas da matriz B
+            for (int k = 0; k < B_width; k++) {
+
+                //Calcula posicao inicial do indice da matrizB
                 indexB = j * B_width + k;
+                //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
+                indexC = i * C_width + k;
 
-                // Acumula o produto de A e B
-                sum += d_rowsA[indexA] * d_rowsB[indexB];
+                rowB = d_rowsB[indexB];
+                rowC = d_rowsC[indexC];
+
+                //Calcula o valor do elemento da matriz C
+                result = rowC + valA * rowB;
+
+                //Atualiza o valor do elemento da matriz C
+                d_rowsC[indexC] = result;
+
             }
 
-            // Armazena o valor final na posição (i, k) de C
-            indexC = i * C_width+ k;
-            d_rowsC[indexC] = sum;
         }
     }
 }
