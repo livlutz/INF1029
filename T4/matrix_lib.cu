@@ -52,6 +52,8 @@ void matrix_multiply(struct matrix *matrixA, struct matrix *matrixB, struct matr
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
+    //Calcular o indice da matrix C pra cada thread
+
     // Debug para exibir valores iniciais
     if(index == 0){
       printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n", blockDim.x, gridDim.x, stride);
