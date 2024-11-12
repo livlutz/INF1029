@@ -18,10 +18,6 @@ void scalar_mult(float scalar_value, float *d_rows, int matrix_size) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
 
-    if(index == 0){
-        printf("\nblockDim.x=%d   gridDim.x=%d    stride=%d\n",blockDim.x,gridDim.x,stride);
-    }
-
     for(int i = index; i < matrix_size; i += stride) {
         d_rows[i] *= scalar_value;
     }

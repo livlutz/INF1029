@@ -219,8 +219,8 @@ int main(int argc, char *argv[]) {
         for(int i = 0; i < matrixA.width; i++){
             cudaError = cudaMemcpy(matrixA.d_rows + i, matrixA.h_rows + i, sizeof(float), cudaMemcpyHostToDevice);
             if (cudaError != cudaSuccess) {
-            printf("cudaMemcpy matrixA.h_rows -> matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-            return 1;
+                printf("cudaMemcpy matrixA.h_rows -> matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+                return 1;
             }
         }
 
@@ -330,7 +330,7 @@ int main(int argc, char *argv[]) {
     gettimeofday(&start, NULL);
 
     /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
-    if (check_errors(&matrixC, 102400.0f) == 1){
+    if (check_errors(&matrixC, 51200.0f) == 1){
         printf("No errors found\n");
     };
 
