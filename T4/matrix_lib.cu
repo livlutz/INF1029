@@ -30,7 +30,10 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix) {
     }
 
     int matrix_size = matrix->height * matrix->width;
-    scalar_mult<<<MAX_BLOCKS_PER_GRID, THREADS_PER_BLOCK>>>(scalar_value, matrix->d_rows, matrix_size);
+    int threads_per_block = THREADS_PER_BLOCK;
+    int blocks_per_grid =(matrix_size + threads_per_block - 1) / threads_per_block;
+
+    scalar_mult<<<blocks_per_grid, threads_per_block>>>(scalar_value, matrix->d_rows, matrix_size);
 
     return 1;
 }
@@ -52,7 +55,7 @@ void matrix_multiply(float *d_rowsA, float *d_rowsB, float *d_rowsC, unsigned lo
     int indexA, indexB, indexC;
     float valA,rowB,rowC,result;
 
-    // Calcular a multiplicação por bloco e por thread, onde cada thread cuida de um elemento de matrixC
+    //itera por linhas da matriz C
     for (int i = index; i < C_height; i += stride) {
 
         //itera por colunas da matriz A
@@ -73,6 +76,7 @@ void matrix_multiply(float *d_rowsA, float *d_rowsB, float *d_rowsC, unsigned lo
                 indexC = i * C_width + k;
 
                 rowB = d_rowsB[indexB];
+
                 rowC = d_rowsC[indexC];
 
                 //Calcula o valor do elemento da matriz C
@@ -102,8 +106,12 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     unsigned long int B_width = matrixB->width;
     unsigned long int C_width = matrixC->width;
 
-    matrix_multiply<<<MAX_BLOCKS_PER_GRID,THREADS_PER_BLOCK>>>(d_rowsA,d_rowsB,d_rowsC,C_height,A_width,B_width,C_width);
-   
+    int blockSize = THREADS_PER_BLOCK;
+    int numBlocks = ((matrixC->height * matrixC->width) + blockSize - 1) / blockSize;
+    if (numBlocks > MAX_BLOCKS_PER_GRID) numBlocks = MAX_BLOCKS_PER_GRID;
+
+    matrix_multiply<<<numBlocks,blockSize>>>(d_rowsA,d_rowsB,d_rowsC,C_height,A_width,B_width,C_width);
+
     return 1;
 }
 

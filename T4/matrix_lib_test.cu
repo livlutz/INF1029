@@ -85,10 +85,12 @@ int print_matrix(struct matrix *matrix) {
 }
 
 int check_errors(struct matrix *matrix, float scalar_value) {
+    long unsigned int ind;
     for(int i = 0; i < matrix->height; i++){
         for(int j = 0; j < matrix->width; j++){
             if(matrix->h_rows[i * matrix->height + j] != scalar_value){
-                printf("Matrix error\nExpected value : %f\nReceived value:%f\n", scalar_value, matrix->h_rows[i * matrix->height + j]);
+                ind = i * matrix->height + j;
+                printf("Matrix error\nExpected value : %f\nReceived value:%f no indice : %ld\n", scalar_value, matrix->h_rows[i * matrix->height + j],ind);
                 return 0;
             }
         }
@@ -275,10 +277,12 @@ int main(int argc, char *argv[]) {
 	    printf("%s: scalar_matrix_mult problem.", argv[0]);
 	    return 1;
     }
+    
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
     cudaDeviceSynchronize();
+
 
     cudaError = cudaMemcpy(matrixA.h_rows, matrixA.d_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
@@ -304,10 +308,12 @@ int main(int argc, char *argv[]) {
 	    printf("%s: matrix_matrix_mult problem.", argv[0]);
 	    return 1;
     }
+
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
     cudaDeviceSynchronize();
+
     cudaError = cudaMemcpy(matrixC.h_rows, matrixC.d_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
         printf("cudaMemcpy (d_y -> h_y) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
