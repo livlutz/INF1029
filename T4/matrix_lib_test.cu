@@ -208,31 +208,13 @@ int main(int argc, char *argv[]) {
     programa deve atribuir o valor FULL_ALLOCATION no campo alloc_mode da matriz B e o valor
     PARTIAL_ALLOC no campo alloc_mode das matrizes A e C.
     */
-    else if(max_mem_gpu < somaTotalMemMatriz && max_mem_gpu >= somaTotalMemB){
+    else if(max_mem_gpu < somaTotalMemMatriz && max_mem_gpu > somaTotalMemB){
         
         //Alocando a matriz B na GPU por completo
         cudaError = cudaMemcpy(matrixB.d_rows, matrixB.h_rows, (matrixB.height * matrixB.width) * sizeof(float), cudaMemcpyHostToDevice);
         if (cudaError != cudaSuccess) {
             printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
             return 1;
-        }
-
-        //alocando 1 linha de A na GPU
-        for(int i = 0; i < matrixA.width; i++){
-            cudaError = cudaMemcpy(matrixA.d_rows + i, matrixA.h_rows + i, sizeof(float), cudaMemcpyHostToDevice);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy matrixA.h_rows -> matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                return 1;
-            }
-        }
-
-        //alocando 1 linha de C na GPU
-        for(int j = 0;j < matrixC.width;j++){
-            cudaError = cudaMemcpy(matrixC.d_rows + j, matrixC.h_rows + j, sizeof(float), cudaMemcpyHostToDevice);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy matrixC.h_rows -> matrixC.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                return 1;
-            }
         }
 
         matrixA.alloc_mode = 0;
@@ -281,9 +263,6 @@ int main(int argc, char *argv[]) {
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
-    cudaDeviceSynchronize();
-
-
     cudaError = cudaMemcpy(matrixA.h_rows, matrixA.d_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
 	    printf("cudaMemcpy (d_y -> h_y) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
@@ -311,8 +290,6 @@ int main(int argc, char *argv[]) {
 
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
-
-    cudaDeviceSynchronize();
 
     cudaError = cudaMemcpy(matrixC.h_rows, matrixC.d_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
