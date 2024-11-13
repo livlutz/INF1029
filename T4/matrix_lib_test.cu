@@ -280,6 +280,18 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    /* Check foor errors */
+    printf("Checking matrixA for errors...\n");
+    gettimeofday(&start, NULL);
+
+    /*Para checar com a matriz 1024 X 1024 basta mudar o float da check_errors para 51200.00f que é o valor esperado para multiplicar as matrizes com 10.0 e 5.0 */	
+    if (check_errors(&matrixA, 10.0f) == 1){
+        printf("No errors found\n");
+    };
+
+    gettimeofday(&stop, NULL);
+    printf("%f ms\n", timedifference_msec(start, stop));
+
     /* Calculate the product between matrix A and matrix B */
     printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
     gettimeofday(&start, NULL);

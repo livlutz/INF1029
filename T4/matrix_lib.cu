@@ -35,7 +35,7 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix) {
     int blocks_per_grid =(matrix_size + threads_per_block - 1) / threads_per_block;
 
     if(matrix->alloc_mode == 0){
-        for(int i =0;i<matrix->height;i++){
+        for(int i = 0; i < matrix->height; i++){
             cudaError = cudaMemcpy(matrix->d_rows, &matrix->h_rows[i * matrix->width], matrix->width * sizeof(float), cudaMemcpyHostToDevice);
             if (cudaError != cudaSuccess) {
                 printf("cudaMemcpy h_rowA -> d_rowA returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
