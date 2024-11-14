@@ -48,6 +48,8 @@ Na minha humilde residencia : n sei ainda
 FULL : matrix_lib_test 5.0 1024 1024 1024 1024 256 4096 12 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
 PARTIAL : matrix_lib_test 5.0 1024 1024 1024 1024 256 4096 8 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
 
+FULL : matrix_lib_test 5.0 2048 2048 2048 2048 256 4096 12 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
+PARTIAL : matrix_lib_test 5.0 2048 2048 2048 2048 256 4096 8 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
 
 256 é o número de threads por bloco a serem disparadas;
 4096 é o número máximo de blocos por GRID a serem usados;

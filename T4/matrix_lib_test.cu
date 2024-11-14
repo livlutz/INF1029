@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     char *result1_filename, *result2_filename;
     char *eptr = NULL;
     struct timeval start, stop, overall_t1, overall_t2;
-    int carregaA, carregaB, inicializaC,max_mem_gpu,threads_per_block,max_blocks_per_grid,somaTotalMemMatriz,somaTotalMemB;
+    int carregaA, carregaB, inicializaC,max_mem_gpu,threads_per_block,max_blocks_per_grid,somaTotalMemMatriz,somaTotalMemB,loop_limit,chunk_size;
     cudaError_t cudaError;
 
     // Mark overall start time
@@ -196,7 +196,27 @@ int main(int argc, char *argv[]) {
     /*Se for viável fazer a alocação completa da três matrizes na CPU e na GPGPU, o programa deve
     atribuir o valor FULL_ALLOCATION no campo alloc_mode da três matrizes.
     */
+
     if(max_mem_gpu >= somaTotalMemMatriz){
+
+        cudaError = cudaMemcpy(matrixA.d_rows, matrixA.h_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixA.h_rows -> matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+
+        cudaError = cudaMemcpy(matrixB.d_rows, matrixB.h_rows, (matrixB.height * matrixB.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+
+        cudaError = cudaMemcpy(matrixC.d_rows, matrixC.h_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixC.h_rows -> matrixC.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+
         matrixA.alloc_mode = 1;
         matrixB.alloc_mode = 1;
         matrixC.alloc_mode = 1;
@@ -208,21 +228,15 @@ int main(int argc, char *argv[]) {
     programa deve atribuir o valor FULL_ALLOCATION no campo alloc_mode da matriz B e o valor
     PARTIAL_ALLOC no campo alloc_mode das matrizes A e C.
     */
-    else if(max_mem_gpu < somaTotalMemMatriz && max_mem_gpu > somaTotalMemB){
-        
-        //Alocando a matriz B na GPU por completo
-        cudaError = cudaMemcpy(matrixB.d_rows, matrixB.h_rows, (matrixB.height * matrixB.width) * sizeof(float), cudaMemcpyHostToDevice);
-        if (cudaError != cudaSuccess) {
-            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-            return 1;
-        }
 
-        int loop_limit = (somaTotalMemMatriz + max_mem_gpu - 1)/max_mem_gpu;
-        int chunk_size = max_mem_gpu;
+    else if(max_mem_gpu < somaTotalMemMatriz && max_mem_gpu > somaTotalMemB){
+
+        loop_limit = ((matrixA.height * matrixA.width) + max_mem_gpu - 1)/max_mem_gpu;
+        chunk_size = max_mem_gpu;
 
         for(int count = 0; count < loop_limit; count++){
-            if(somaTotalMemMatriz % max_mem_gpu != 0 && count == loop_limit -1){
-                chunk_size = somaTotalMemMatriz % max_mem_gpu;
+            if((matrixA.height * matrixA.width) % max_mem_gpu != 0 && count == loop_limit -1){
+                chunk_size = (matrixA.height * matrixA.width) % max_mem_gpu;
             }
 
             // Copy array from host to device
@@ -246,6 +260,13 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        //Alocando a matriz B na GPU por completo
+        cudaError = cudaMemcpy(matrixB.d_rows, matrixB.h_rows, (matrixB.height * matrixB.width) * sizeof(float), cudaMemcpyHostToDevice);
+        if (cudaError != cudaSuccess) {
+            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
+            return 1;
+        }
+
         matrixA.alloc_mode = 0;
         matrixB.alloc_mode = 1;
         matrixC.alloc_mode = 0;
@@ -257,28 +278,6 @@ int main(int argc, char *argv[]) {
     else{
         printf("Erro de alocação de memória na GPGPU\n");
         return 0;
-    }
-
-    //Alocando as matrizes na GPU por completo
-
-    if(matrixA.alloc_mode == 1 && matrixB.alloc_mode == 1 && matrixC.alloc_mode == 1){
-        cudaError = cudaMemcpy(matrixA.d_rows, matrixA.h_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyHostToDevice);
-        if (cudaError != cudaSuccess) {
-            printf("cudaMemcpy matrixA.h_rows -> matrixA.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-            return 1;
-        }
-
-        cudaError = cudaMemcpy(matrixB.d_rows, matrixB.h_rows, (matrixB.height * matrixB.width) * sizeof(float), cudaMemcpyHostToDevice);
-        if (cudaError != cudaSuccess) {
-            printf("cudaMemcpy matrixB.h_rows -> matrixB.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-            return 1;
-        }
-
-        cudaError = cudaMemcpy(matrixC.d_rows, matrixC.h_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyHostToDevice);
-        if (cudaError != cudaSuccess) {
-            printf("cudaMemcpy matrixC.h_rows -> matrixC.d_rows returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-            return 1;
-        }
     }
 
     /* Scalar product of matrix A */

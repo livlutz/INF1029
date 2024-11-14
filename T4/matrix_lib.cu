@@ -12,6 +12,10 @@ resultado do produto entre o valor escalar e um dos elementos da matriz (ou mais
 elemento se o dataset for maior que o número de threads do GRID). O resultado da
 operação deve ser retornado na matriz de entrada. Em caso de sucesso, a função deve
 retornar o valor 1. Em caso de erro, a função deve retornar 0.*/
+
+/*Cada função kernel deve calcular o
+resultado do produto entre o valor escalar e um dos elementos da matriz (ou mais de um
+elemento se o dataset for maior que o número de threads do GRID)*/
 __global__
 void scalar_mult(float scalar_value, float *d_rows, int matrix_size) {
     
@@ -25,17 +29,18 @@ void scalar_mult(float scalar_value, float *d_rows, int matrix_size) {
 
 
 int scalar_matrix_mult(float scalar_value, struct matrix *matrix) {
+    
     if(matrix == NULL) {
         return 0;
     }
+
     int matrix_size = matrix->height * matrix->width;
     int threads_per_block = THREADS_PER_BLOCK;
     int blocks_per_grid =(matrix_size + threads_per_block - 1) / threads_per_block;
 
-
     scalar_mult<<<blocks_per_grid, threads_per_block>>>(scalar_value, matrix->d_rows, matrix_size);
+    
     return 1;
-
 }
 
 
@@ -45,6 +50,10 @@ referente a um dos elementos da matriz C (ou mais de um elemento se o dataset fo
 que o número de threads do GRID). O resultado da operação deve ser retornado na matriz
 C. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
 retornar 0*/
+
+/*Cada função kernel deve calcular o resultado
+referente a um dos elementos da matriz C (ou mais de um elemento se o dataset for maior
+que o número de threads do GRID).*/
 
 __global__
 void matrix_multiply(float *d_rowsA, float *d_rowsB, float *d_rowsC, unsigned long int C_height, unsigned long int A_width, unsigned long int B_width, unsigned long int C_width) {
