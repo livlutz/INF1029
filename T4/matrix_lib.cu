@@ -112,7 +112,7 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     float *A_rows = matrixA->d_rows, *B_rows = matrixB->d_rows, *C_rows = matrixC->d_rows;
 
     if(matrixA->alloc_mode == 0){
-        loop_limit = (A_height - 1) ;
+        loop_limit = A_height ;
 
         for(int count = 0; count < loop_limit; count++){
             matrix_multiply<<<numBlocks, blockSize>>>(A_alloc_mode, B_alloc_mode, C_alloc_mode, A_height, A_width, B_height, B_width, C_height, C_width, A_rows, B_rows, C_rows);
