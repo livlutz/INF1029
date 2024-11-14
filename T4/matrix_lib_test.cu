@@ -288,8 +288,6 @@ int main(int argc, char *argv[]) {
 	    return 1;
     }
 
-    cudaDeviceSynchronize();
-
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
 
@@ -326,8 +324,6 @@ int main(int argc, char *argv[]) {
 	    printf("%s: matrix_matrix_mult problem.", argv[0]);
 	    return 1;
     }
-
-    cudaDeviceSynchronize();
 
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));

@@ -39,6 +39,8 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix) {
     int blocks_per_grid =(matrix_size + threads_per_block - 1) / threads_per_block;
 
     scalar_mult<<<blocks_per_grid, threads_per_block>>>(scalar_value, matrix->d_rows, matrix_size);
+
+    cudaDeviceSynchronize();
     
     return 1;
 }
@@ -56,27 +58,41 @@ referente a um dos elementos da matriz C (ou mais de um elemento se o dataset fo
 que o número de threads do GRID).*/
 
 __global__
-void matrix_multiply(float *d_rowsA, float *d_rowsB, float *d_rowsC, unsigned long int C_height, unsigned long int A_width, unsigned long int B_width, unsigned long int C_width) {
+void matrix_multiply(int matrixA_alloc_mode, int matrixB_alloc_mode, int matrixC_alloc_mode, unsigned long int matrixA_height, unsigned long int matrixA_width, unsigned long int matrixB_height, unsigned long int matrixB_width, unsigned long int matrixC_height, unsigned long int matrixC_width, float *matrixA_rows, float *matrixB_rows, float *matrixC_rows) {
 
-    int row = blockIdx.x * blockDim.x + threadIdx.x;
-    int column = blockIdx.y * blockDim.y + threadIdx.y;
+    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.x;    
 
     int indexC,linhaA;
     float result;
 
-    if (row < C_height && column < B_width) {
-        result = 0.0f;
-        
-        linhaA = row * A_width;
-        indexC = row * C_width + column;
-        // A multiplicação de matrizes é feita na soma dos produtos A[i, k] * B[k, j]
-        // Para a célula C[row, column], percorre toda a dimensão k (do tamanho de A_width)
-        for (int k = 0; k < A_width; k++) {
-            result += d_rowsA[linhaA + k] * d_rowsB[k * B_width + column];
+    if(matrixA_alloc_mode == 0 && matrixB_alloc_mode == 1 && matrixC_alloc_mode == 0){
+        for (int i = index; i < matrixC_width; i += stride) {
+            matrixC_rows[i] += matrixA_rows[i] * matrixB_rows[i];
         }
-        
-        // Armazenar o resultado final na matriz C
-        d_rowsC[indexC] = result;
+    }
+
+    else if(matrixA_alloc_mode == 1 && matrixB_alloc_mode == 1 && matrixC_alloc_mode == 1){
+
+        for(int i = index; i < matrixA_height; i += stride){
+
+            linhaA = i * matrixA_width;
+
+            indexC = i * matrixC_width;
+
+            for(int j = 0; j < matrixB_width; j++){
+
+                result = 0;
+
+                for(int k = 0; k < matrixA_width; k++){
+
+                    result += matrixA_rows[linhaA + k] * matrixB_rows[k * matrixB_width + j];
+                }
+
+                matrixC_rows[indexC + j] = result;
+            }
+
+        }
     }
 }
 
@@ -86,29 +102,30 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         printf("Erro de dimensao ou alocacao\n");
         return 0;
     }
+    
+    int numBlocks,blockSize,loop_limit,chunk_size;
+    numBlocks = MAX_BLOCKS_PER_GRID;
+    blockSize = THREADS_PER_BLOCK;
 
-    float *d_rowsA = matrixA->d_rows;
-    float *d_rowsB = matrixB->d_rows;
-    float *d_rowsC = matrixC->d_rows;
-    unsigned long int C_height = matrixC->height;
-    unsigned long int A_width = matrixA->width;
-    unsigned long int B_width = matrixB->width;
-    unsigned long int C_width = matrixC->width;
+    int A_alloc_mode = matrixA->alloc_mode, B_alloc_mode = matrixB->alloc_mode, C_alloc_mode = matrixC->alloc_mode;
+    unsigned long int A_height = matrixA->height, A_width = matrixA->width, B_height = matrixB->height, B_width = matrixB->width, C_height = matrixC->height, C_width = matrixC->width;
+    float *A_rows = matrixA->d_rows, *B_rows = matrixB->d_rows, *C_rows = matrixC->d_rows;
 
-    // Configuração do número de threads por bloco
-    dim3 blockSize(THREADS_PER_BLOCK, THREADS_PER_BLOCK);  // 16x16 threads por bloco
+    if(matrixA->alloc_mode == 0 && matrixC->alloc_mode == 0){
+        loop_limit = ((matrixA.height * matrixA.width) + max_mem_gpu - 1)/max_mem_gpu;
+        chunk_size = max_mem_gpu;
 
-    // Calcular o número de blocos necessários em ambas as dimensões (x e y)
-    dim3 numBlocks((C_width + blockSize.x - 1) / blockSize.x, (C_height + blockSize.y - 1) / blockSize.y);
-
-    if(numBlocks.x > MAX_BLOCKS_PER_GRID || numBlocks.y > MAX_BLOCKS_PER_GRID){
-        numBlocks.x = MAX_BLOCKS_PER_GRID;
-        numBlocks.y = MAX_BLOCKS_PER_GRID;
-        return 0;
+        for(int count = 0; count < loop_limit; count++){
+            if((matrixA.height * matrixA.width) % max_mem_gpu != 0 && count == loop_limit -1){
+                chunk_size = (matrixA.height * matrixA.width) % max_mem_gpu;
+            }
+        matrix_multiply<<<numBlocks, blockSize>>>(A_alloc_mode, B_alloc_mode, C_alloc_mode, A_height, A_width, B_height, B_width, C_height, C_width, A_rows, B_rows, C_rows);
+        cudaDeviceSynchronize();
     }
-
     // Chamar o kernel de multiplicação de matrizes
-    matrix_multiply<<<numBlocks, blockSize>>>(d_rowsA, d_rowsB, d_rowsC, C_height, A_width, B_width, C_width);
+    matrix_multiply<<<numBlocks, blockSize>>>(A_alloc_mode, B_alloc_mode, C_alloc_mode, A_height, A_width, B_height, B_width, C_height, C_width, A_rows, B_rows, C_rows);
+
+    cudaDeviceSynchronize();
 
     return 1;
 }
