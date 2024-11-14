@@ -28,42 +28,14 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix) {
     if(matrix == NULL) {
         return 0;
     }
-
-    cudaError_t cudaError;
     int matrix_size = matrix->height * matrix->width;
     int threads_per_block = THREADS_PER_BLOCK;
     int blocks_per_grid =(matrix_size + threads_per_block - 1) / threads_per_block;
 
-    if(matrix->alloc_mode == 0){
-        for(int i = 0; i < matrix->height; i++){
-            cudaError = cudaMemcpy(matrix->d_rows, &matrix->h_rows[i * matrix->width], matrix->width * sizeof(float), cudaMemcpyHostToDevice);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy h_rowA -> d_rowA returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                cudaFree(matrix->d_rows);
-                return 0;
-            }
 
-            scalar_mult<<<blocks_per_grid, threads_per_block>>>(scalar_value, matrix->d_rows, matrix_size);
-            cudaDeviceSynchronize();
+    scalar_mult<<<blocks_per_grid, threads_per_block>>>(scalar_value, matrix->d_rows, matrix_size);
+    return 1;
 
-            cudaError = cudaMemcpy(&matrix->h_rows[i * matrix->width], matrix->d_rows, matrix->width * sizeof(float), cudaMemcpyDeviceToHost);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy d_rowA -> h_rowA returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                cudaFree(matrix->d_rows);
-                return 0;
-            }
-        }
-
-        return 1;
-    }
-
-    else{
-        scalar_mult<<<blocks_per_grid, threads_per_block>>>(scalar_value, matrix->d_rows, matrix_size);
-        cudaDeviceSynchronize();
-        return 1;
-    }
-   
-    return 0;
 }
 
 
@@ -126,7 +98,6 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
 
-    cudaError_t cudaError;
     float *d_rowsA = matrixA->d_rows;
     float *d_rowsB = matrixB->d_rows;
     float *d_rowsC = matrixC->d_rows;
@@ -138,58 +109,8 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     int blockSize = THREADS_PER_BLOCK;
     int numBlocks = ((matrixC->height * matrixC->width) + blockSize - 1) / blockSize;
     if (numBlocks > MAX_BLOCKS_PER_GRID) numBlocks = MAX_BLOCKS_PER_GRID;
-
-    if(matrixA->alloc_mode == 0 && matrixC->alloc_mode == 0){
-        // Processa cada linha de A e C individualmente
-        for (int i = 0; i < matrixA->height; i++) {
-            // Copia a linha atual de A para o device
-            cudaError = cudaMemcpy(d_rowsA, &matrixA->h_rows[i * matrixA->width], matrixA->width * sizeof(float), cudaMemcpyHostToDevice);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy h_rowA -> d_rowA returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                cudaFree(d_rowsA);
-                cudaFree(d_rowsC);
-                return 0;
-            }
-
-            // Copia a linha atual de C para o device
-            cudaError = cudaMemcpy(d_rowsC, &matrixC->h_rows[i * matrixC->width], matrixC->width * sizeof(float), cudaMemcpyHostToDevice);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy h_rowC -> d_rowC returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                cudaFree(d_rowsA);
-                cudaFree(d_rowsC);
-                return 0;
-            }
-
-            // Executa o kernel para calcular a linha `i` de C
-            matrix_multiply<<<numBlocks, blockSize>>>(d_rowsA, matrixB->d_rows, d_rowsC, 1, matrixA->width, matrixB->width, matrixC->width);
-            cudaDeviceSynchronize();
-
-            // Copia o resultado da linha `i` de C do device de volta para a host
-            cudaError = cudaMemcpy(&matrixC->h_rows[i * matrixC->width], d_rowsC, matrixC->width * sizeof(float), cudaMemcpyDeviceToHost);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy d_rowC -> h_rowC returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                cudaFree(d_rowsA);
-                cudaFree(d_rowsC);
-                return 0;
-            }
-
-            // Copia a linha atual de A de volta para a host
-            cudaError = cudaMemcpy(&matrixA->h_rows[i * matrixA->width], d_rowsA, matrixA->width * sizeof(float), cudaMemcpyDeviceToHost);
-            if (cudaError != cudaSuccess) {
-                printf("cudaMemcpy d_rowA -> h_rowA returned error %s (code %d)\n", cudaGetErrorString(cudaError), cudaError);
-                cudaFree(d_rowsA);
-                cudaFree(d_rowsC);
-                return 0;
-            }
-        }
-    }
-
-    else{
-        matrix_multiply<<<numBlocks,blockSize>>>(d_rowsA,d_rowsB,d_rowsC,C_height,A_width,B_width,C_width);
-        cudaDeviceSynchronize();
-        return 1;
-    }
-
+    
+    matrix_multiply<<<numBlocks,blockSize>>>(d_rowsA,d_rowsB,d_rowsC,C_height,A_width,B_width,C_width);
     return 1;
 }
 

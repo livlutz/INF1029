@@ -217,6 +217,35 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        int loop_limit = (somaTotalMemMatriz + max_mem_gpu - 1)/max_mem_gpu;
+        int chunk_size = max_mem_gpu;
+
+        for(int count = 0; count < loop_limit; count++){
+            if(somaTotalMemMatriz % max_mem_gpu != 0 && count == loop_limit -1){
+                chunk_size = somaTotalMemMatriz % max_mem_gpu;
+            }
+
+            // Copy array from host to device
+            printf("Copying arrays from host to device...");
+            gettimeofday(&start, NULL);
+
+            //Alocando a matriz A na GPU parcialmente
+            cudaError = cudaMemcpy(matrixA.d_rows, matrixA.h_rows + (count * max_mem_gpu), chunk_size * sizeof(float), cudaMemcpyHostToDevice);
+
+            if (cudaError != cudaSuccess) {
+                printf("cudaMemcpy (h_x -> d_x) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
+                return 1;
+            }
+
+            //Aloca a matriz C parcialmente na GPU
+            cudaError = cudaMemcpy(matrixC.d_rows, matrixC.h_rows + (count * max_mem_gpu), chunk_size * sizeof(float), cudaMemcpyHostToDevice);
+
+            if (cudaError != cudaSuccess) {
+                printf("cudaMemcpy (h_x -> d_x) returned error %s (code %d), line(%d)\n", cudaGetErrorString(cudaError), cudaError, __LINE__);
+                return 1;
+            }
+        }
+
         matrixA.alloc_mode = 0;
         matrixB.alloc_mode = 1;
         matrixC.alloc_mode = 0;
@@ -259,9 +288,11 @@ int main(int argc, char *argv[]) {
 	    printf("%s: scalar_matrix_mult problem.", argv[0]);
 	    return 1;
     }
-    
+
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
+
+    cudaDeviceSynchronize();
 
     cudaError = cudaMemcpy(matrixA.h_rows, matrixA.d_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
@@ -280,7 +311,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    /* Check foor errors */
+    /* Check for errors */
     printf("Checking matrixA for errors...\n");
     gettimeofday(&start, NULL);
 
@@ -302,6 +333,8 @@ int main(int argc, char *argv[]) {
 
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
+
+    cudaDeviceSynchronize();
 
     cudaError = cudaMemcpy(matrixC.h_rows, matrixC.d_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
