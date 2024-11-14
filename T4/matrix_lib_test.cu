@@ -288,10 +288,10 @@ int main(int argc, char *argv[]) {
 	    return 1;
     }
 
+    cudaDeviceSynchronize();
+
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
-
-    cudaDeviceSynchronize();
 
     cudaError = cudaMemcpy(matrixA.h_rows, matrixA.d_rows, (matrixA.height * matrixA.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
@@ -319,9 +319,6 @@ int main(int argc, char *argv[]) {
         printf("No errors found\n");
     };
 
-    gettimeofday(&stop, NULL);
-    printf("%f ms\n", timedifference_msec(start, stop));
-
     /* Calculate the product between matrix A and matrix B */
     printf("Executing matrix_matrix_mult(matrixA, matrixB, matrixC)...\n");
     gettimeofday(&start, NULL);
@@ -330,10 +327,10 @@ int main(int argc, char *argv[]) {
 	    return 1;
     }
 
+    cudaDeviceSynchronize();
+
     gettimeofday(&stop, NULL);
     printf("%f ms\n", timedifference_msec(start, stop));
-
-    cudaDeviceSynchronize();
 
     cudaError = cudaMemcpy(matrixC.h_rows, matrixC.d_rows, (matrixC.height * matrixC.width) * sizeof(float), cudaMemcpyDeviceToHost);
     if (cudaError != cudaSuccess){
