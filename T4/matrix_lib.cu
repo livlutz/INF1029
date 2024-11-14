@@ -58,45 +58,25 @@ que o número de threads do GRID).*/
 __global__
 void matrix_multiply(float *d_rowsA, float *d_rowsB, float *d_rowsC, unsigned long int C_height, unsigned long int A_width, unsigned long int B_width, unsigned long int C_width) {
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
+    int row = blockIdx.x * blockDim.x + threadIdx.x;
+    int column = blockIdx.y * blockDim.y + threadIdx.y;
 
-    int indexA, indexB, indexC;
-    float valA,rowB,rowC,result;
+    int indexC,linhaA;
+    float result;
 
-    //itera por linhas da matriz C
-    for (int i = index; i < C_height; i += stride) {
-
-        //itera por colunas da matriz A
-        for (int j = 0; j < A_width; j++) {
-
-            //Calcula posicao inicial do indice da matrizA 
-            indexA = i * A_width + j;
-
-            //valor do elemento da matriz A
-            valA = d_rowsA[indexA];
-
-            //itera por linhas da matriz B
-            for (int k = 0; k < B_width; k++) {
-
-                //Calcula posicao inicial do indice da matrizB
-                indexB = j * B_width + k;
-                //Calcula posicao inicial dos indices da matrizC aqui e depois incrementa o valor dentro do loop
-                indexC = i * C_width + k;
-
-                rowB = d_rowsB[indexB];
-
-                rowC = d_rowsC[indexC];
-
-                //Calcula o valor do elemento da matriz C
-                result = rowC + valA * rowB;
-
-                //Atualiza o valor do elemento da matriz C
-                d_rowsC[indexC] = result;
-
-            }
-
+    if (row < C_height && column < B_width) {
+        result = 0.0f;
+        
+        linhaA = row * A_width;
+        indexC = row * C_width + column;
+        // A multiplicação de matrizes é feita na soma dos produtos A[i, k] * B[k, j]
+        // Para a célula C[row, column], percorre toda a dimensão k (do tamanho de A_width)
+        for (int k = 0; k < A_width; k++) {
+            result += d_rowsA[linhaA + k] * d_rowsB[k * B_width + column];
         }
+        
+        // Armazenar o resultado final na matriz C
+        d_rowsC[indexC] = result;
     }
 }
 
@@ -115,11 +95,21 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
     unsigned long int B_width = matrixB->width;
     unsigned long int C_width = matrixC->width;
 
-    int blockSize = THREADS_PER_BLOCK;
-    int numBlocks = ((matrixC->height * matrixC->width) + blockSize - 1) / blockSize;
-    if (numBlocks > MAX_BLOCKS_PER_GRID) numBlocks = MAX_BLOCKS_PER_GRID;
-    
-    matrix_multiply<<<numBlocks,blockSize>>>(d_rowsA,d_rowsB,d_rowsC,C_height,A_width,B_width,C_width);
+    // Configuração do número de threads por bloco
+    dim3 blockSize(THREADS_PER_BLOCK, THREADS_PER_BLOCK);  // 16x16 threads por bloco
+
+    // Calcular o número de blocos necessários em ambas as dimensões (x e y)
+    dim3 numBlocks((C_width + blockSize.x - 1) / blockSize.x, (C_height + blockSize.y - 1) / blockSize.y);
+
+    if(numBlocks.x > MAX_BLOCKS_PER_GRID || numBlocks.y > MAX_BLOCKS_PER_GRID){
+        numBlocks.x = MAX_BLOCKS_PER_GRID;
+        numBlocks.y = MAX_BLOCKS_PER_GRID;
+        return 0;
+    }
+
+    // Chamar o kernel de multiplicação de matrizes
+    matrix_multiply<<<numBlocks, blockSize>>>(d_rowsA, d_rowsB, d_rowsC, C_height, A_width, B_width, C_width);
+
     return 1;
 }
 
