@@ -3,7 +3,7 @@ Ana Luiza Pinto Marques - 2211960*/
 
 #include <stdio.h>
 #include <stdlib.h>
-#define TAM 2048 * 2048
+#define TAM 1024 * 1024
 
 int main(void){
     float *rowsA, *rowsB;
@@ -52,6 +52,8 @@ PARTIAL : matrix_lib_test 5.0 1024 1024 1024 1024 256 4096 8 floats_256_2.0f.dat
 
 FULL : matrix_lib_test 5.0 2048 2048 2048 2048 256 4096 48 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
 PARTIAL : matrix_lib_test 5.0 2048 2048 2048 2048 256 4096 32 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat 
+
+matrix_lib_test 5.0 8 16 16 8 256 4096 1024 floats_256_2.0f.dat floats_256_5.0f.dat result1.dat result2.dat
 
 256 é o número de threads por bloco a serem disparadas;
 4096 é o número máximo de blocos por GRID a serem usados;
