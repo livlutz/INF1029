@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    /* Check foor errors */
+    /* Check for errors */
     printf("Checking matrixC for errors...\n");
     gettimeofday(&start, NULL);
 

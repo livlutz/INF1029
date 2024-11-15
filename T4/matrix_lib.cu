@@ -13,9 +13,6 @@ elemento se o dataset for maior que o número de threads do GRID). O resultado d
 operação deve ser retornado na matriz de entrada. Em caso de sucesso, a função deve
 retornar o valor 1. Em caso de erro, a função deve retornar 0.*/
 
-/*Cada função kernel deve calcular o
-resultado do produto entre o valor escalar e um dos elementos da matriz (ou mais de um
-elemento se o dataset for maior que o número de threads do GRID)*/
 __global__
 void scalar_mult(float scalar_value, float *d_rows, int matrix_size) {
     
@@ -35,10 +32,8 @@ int scalar_matrix_mult(float scalar_value, struct matrix *matrix) {
     }
 
     int matrix_size = matrix->height * matrix->width;
-    int threads_per_block = THREADS_PER_BLOCK;
-    int blocks_per_grid =(matrix_size + threads_per_block - 1) / threads_per_block;
 
-    scalar_mult<<<blocks_per_grid, threads_per_block>>>(scalar_value, matrix->d_rows, matrix_size);
+    scalar_mult<<<MAX_BLOCKS_PER_GRID, THREADS_PER_BLOCK>>>(scalar_value, matrix->d_rows, matrix_size);
 
     cudaDeviceSynchronize();
     
@@ -53,18 +48,16 @@ que o número de threads do GRID). O resultado da operação deve ser retornado 
 C. Em caso de sucesso, a função deve retornar o valor 1. Em caso de erro, a função deve
 retornar 0*/
 
-/*Cada função kernel deve calcular o resultado
-referente a um dos elementos da matriz C (ou mais de um elemento se o dataset for maior
-que o número de threads do GRID).*/
-
 __global__
-void matrix_multiply(int matrixA_alloc_mode, int matrixB_alloc_mode, int matrixC_alloc_mode, unsigned long int matrixA_height, unsigned long int matrixA_width, unsigned long int matrixB_height, unsigned long int matrixB_width, unsigned long int matrixC_height, unsigned long int matrixC_width, float *matrixA_rows, float *matrixB_rows, float *matrixC_rows) {
+void matrix_multiply(int matrixA_alloc_mode, unsigned long int matrixA_height, unsigned long int matrixA_width, unsigned long int matrixB_width, float *matrixA_rows, float *matrixB_rows, float *matrixC_rows) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;    
 
-    int indexC,linhaA,tamC = matrixC_width * matrixC_height,indexB;
+    int indexC,linhaA,tamC,indexB;
     float result;
+
+    tamC = matrixB_width * matrixA_height;
 
     if(matrixA_alloc_mode == 0){
         for (int i = index; i < tamC; i += stride) {
@@ -78,14 +71,16 @@ void matrix_multiply(int matrixA_alloc_mode, int matrixB_alloc_mode, int matrixC
 
             linhaA = i * matrixA_width;
 
-            indexC = i * matrixC_width;
+            indexC = i * matrixB_width;
 
             for(int j = 0; j < matrixB_width; j++){
 
                 result = 0; 
 
                 for(int k = 0; k < matrixA_width; k++){
+
                     indexB = k * matrixB_width + j;
+                    
                     result += matrixA_rows[linhaA + k] * matrixB_rows[indexB];
                 }
 
@@ -103,29 +98,37 @@ int matrix_matrix_mult(struct matrix *matrixA, struct matrix * matrixB, struct m
         return 0;
     }
     
-    int numBlocks,blockSize,loop_limit;
-    numBlocks = MAX_BLOCKS_PER_GRID;
-    blockSize = THREADS_PER_BLOCK;
+    int A_alloc_mode;
+    unsigned long int A_height,A_width,B_width;
+    float *A_rows,*B_rows,*C_rows;
 
-    int A_alloc_mode = matrixA->alloc_mode, B_alloc_mode = matrixB->alloc_mode, C_alloc_mode = matrixC->alloc_mode;
-    unsigned long int A_height = matrixA->height, A_width = matrixA->width, B_height = matrixB->height, B_width = matrixB->width, C_height = matrixC->height, C_width = matrixC->width;
-    float *A_rows = matrixA->d_rows, *B_rows = matrixB->d_rows, *C_rows = matrixC->d_rows;
+    A_alloc_mode = matrixA->alloc_mode;
 
-    if(matrixA->alloc_mode == 0){
-        loop_limit = A_height ;
+    A_height = matrixA->height;
+    A_width = matrixA->width; 
+    B_width = matrixB->width; 
 
-        for(int count = 0; count < loop_limit; count++){
-            matrix_multiply<<<numBlocks, blockSize>>>(A_alloc_mode, B_alloc_mode, C_alloc_mode, A_height, A_width, B_height, B_width, C_height, C_width, A_rows, B_rows, C_rows);
+    A_rows = matrixA->d_rows;
+    B_rows = matrixB->d_rows; 
+    C_rows = matrixC->d_rows;
+
+    if(A_alloc_mode == 0){
+
+        for(int count = 0; count < A_height; count++){
+            matrix_multiply<<<MAX_BLOCKS_PER_GRID, THREADS_PER_BLOCK>>>(A_alloc_mode, A_height, A_width, B_width, A_rows, B_rows, C_rows);
             cudaDeviceSynchronize();
         }
-    }
-    else {
-        // Chamar o kernel de multiplicação de matrizes
-        matrix_multiply<<<numBlocks, blockSize>>>(A_alloc_mode, B_alloc_mode, C_alloc_mode, A_height, A_width, B_height, B_width, C_height, C_width, A_rows, B_rows, C_rows);
-        cudaDeviceSynchronize();
+
+        return 1;
     }
     
-    return 1;
+    else {
+        
+        matrix_multiply<<<MAX_BLOCKS_PER_GRID, THREADS_PER_BLOCK>>>(A_alloc_mode, A_height, A_width, B_width, A_rows, B_rows, C_rows);
+        cudaDeviceSynchronize();
+        return 1;
+    }
+
 }
 
 /*Essa função recebe o número de threads por bloco e o número máximo de blocos por grid
