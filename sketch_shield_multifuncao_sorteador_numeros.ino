@@ -34,31 +34,73 @@ ANIMATION_INTERRUPTED
 
 
 byte ledModeValue = LED_ALL_OFF;
-byte GeneratorModeValues = GENERATOR_STOPPED;
+byte GeneratorModeValue = GENERATOR_STOPPED;
+byte RangeStatusValue = RANGE_NOT_SET;
+byte AnimationModeValue = ANIMATION_STOPPED;
 
 void setup() {
   // put your setup code here, to run once:
   Timer1.initialize(); // inicializa o Timer 1
   MFS.initialize(&Timer1);
+  MFS.write(0); // imprime o valor 0 no display
+  MFS.writeLeds(LED_ALL, OFF);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  //pega o botão
   byte btn = MFS.getButton();
 
-  switch(GeneratorModeValues){
+  switch(GeneratorModeValue){
     case GENERATOR_STOPPED:
       GeneratorModeValues = GENERATOR_STOPPED;
       ledModeValue = LED_ALL_OFF;
-      MFS.writeLeds(LED_ALL_OFF, OFF)
+      MFS.writeLeds(ledModeValue, OFF);
+
+      switch(btn){
+        case BUTTON_1_SHORT_RELEASE:
+          if(RangeStatusValue == RANGE_SET){
+          GeneratorModeValue = GENERATOR_STARTED;
+          AnimationModeValue = ANIMATION_STARTED;
+          }
+        break;
+
+        case BUTTON_1_LONG_PRESSED:
+          //nao faz nada n sei oq botar aqui
+          break;
+
+        case BUTTON_2_SHORT_RELEASE:
+          MFS.writeLeds(LED_ALL_ON, RANGE_MAX_NUMBER);
+          break;
+
+        case BUTTON_2_LONG_PRESSED:
+          GeneratorModeValue = SETTING_RANGE_MAX_NUM_STARTED;
+          break;
+        
+        case BUTTON_3_SHORT_RELEASE:
+          MFS.writeLeds(LED_ALL_ON, RANGE_MIN_NUMBER);
+          break;
+        
+        case BUTTON_3_LONG_PRESSED:
+          GeneratorModeValue = SETTING_RANGE_MIN_NUM_STARTED;
+          break;
+          
+      }
+
       break;
 
-    case GENERATOR_STARTED:
-    
-    case SETTING_RANGE_MAX_NUM_STARTED:
-    
-    case SETTING_RANGE_MIN_NUM_STARTED
+      case GENERATOR_STARTED:
+        break;
 
+      case SETTING_RANGE_MAX_NUM_STARTED:
+        break;
+    
+      case SETTING_RANGE_MIN_NUM_STARTED:
+        break;
   }
+      
 
 }
+
+
