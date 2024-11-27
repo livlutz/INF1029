@@ -96,86 +96,109 @@ void loop() {
 
       //tem q consertar o beep aqui e a animacao
       case GENERATOR_STARTED:
-        // deve tocar um beep curto de 50 ms no buzzer e iniciar a animação dos 4 displays de 7 segmentos e a animação sequencial dos 4 leds.
         MFS.beep(5);
         AnimationModeValue = ANIMATION_STARTED;
         numero = random(RANGE_MIN_NUMBER,RANGE_MAX_NUMBER);
 
-          for(int i = 0; i < 9; i++){
-            switch(AnimationModeValue){
-              AnimationModeValue = ANIMATION_STAGE1;
+        //verificar o botao 1
+        for(int i = 0; i < 9; i++){
 
-              case ANIMATION_STAGE1:
-                u = numero % 10;
-                for(int i = 0;i < u;i++){
-                  MFS.write(i); 
-                }
-
-                AnimationModeValue = ANIMATION_STAGE2;
-                break;
-                
-              case ANIMATION_STAGE2:
-                d = (numero / 10) % 10;
-                for(int i = 0;i < d;i++){
-                  MFS.write(i); 
-                }
-
-                AnimationModeValue = ANIMATION_STAGE3;
-                break;
-                
-              case ANIMATION_STAGE3:
-                c = (numero / 100) % 10;
-                for(int i = 0;i < c;i++){
-                  MFS.write(i); 
-                }
-
-                AnimationModeValue = ANIMATION_STAGE4;
-                break;
-              
-              case ANIMATION_STAGE4:
-                m = (numero / 1000) % 10;
-                for(int i = 0;i < m;i++){
-                  MFS.write(i); 
-                }
-
-                //implementar o interrupt
-                AnimationModeValue = ANIMATION_INTERRUPTED;
-                break;
+          if(btn == BUTTON_1_SHORT_RELEASE){
             
+            AnimationModeValue = ANIMATION_INTERRUPTED;
+            
+            MFS.write("Intr"); 
+            MFS.writeLeds(LED_ALL, OFF); 
+            for (int j = 0; j < 3; j++) {
+                MFS.beep(50); 
+                delay(50);    
             }
+
+            RangeStatusValue = RANGE_NOT_SET; 
+            GeneratorModeValue = GENERATOR_STOPPED; 
+            return; 
+          }
+          
+          switch(AnimationModeValue){
+            AnimationModeValue = ANIMATION_STAGE1;
+
+            case ANIMATION_STAGE1:
+              u = numero % 10;
+              for(int i = 0;i < u;i++){
+                MFS.write(i); 
+              }
+
+              AnimationModeValue = ANIMATION_STAGE2;
+              break;
+                
+            case ANIMATION_STAGE2:
+              d = (numero / 10) % 10;
+              for(int i = 0;i < d;i++){
+                MFS.write(i); 
+              }
+
+              AnimationModeValue = ANIMATION_STAGE3;
+              break;
+                
+            case ANIMATION_STAGE3:
+              c = (numero / 100) % 10;
+              for(int i = 0;i < c;i++){
+                MFS.write(i); 
+              }
+
+              AnimationModeValue = ANIMATION_STAGE4;
+              break;
+              
+            case ANIMATION_STAGE4:
+              m = (numero / 1000) % 10;
+              for(int i = 0;i < m;i++){
+                MFS.write(i); 
+              }
+
+              MFS.blinkDisplay(DIGIT_ALL, ON);
+              for(int i = 0; i < 3; i++){
+                MFS.beep(50);
+                delay(500);
+              }
+
+              AnimationModeValue = ANIMATION_STOPPED;
+              break;
             
-            switch (ledModeValue){
-              case LED_ALL_OFF:
-                ledModeValue = LED_1_ON;
-                MFS.writeLeds(LED_1, ON);
-                break;
+          }
+            
+          switch (ledModeValue){
+            case LED_ALL_OFF:
+              ledModeValue = LED_1_ON;
+              MFS.writeLeds(LED_1, ON);
+              break;
               
-              case LED_1_ON:
-                MFS.writeLeds(LED_1, OFF);
-                ledModeValue = LED_2_ON;
-                MFS.writeLeds(LED_2, ON);
-                break;
+            case LED_1_ON:
+              MFS.writeLeds(LED_1, OFF);
+              ledModeValue = LED_2_ON;
+              MFS.writeLeds(LED_2, ON);
+              break;
               
-              case LED_2_ON:
-                MFS.writeLeds(LED_2, OFF);
-                ledModeValue = LED_3_ON;
-                MFS.writeLeds(LED_3, ON);
-                break;
+            case LED_2_ON:
+              MFS.writeLeds(LED_2, OFF);
+              ledModeValue = LED_3_ON;
+              MFS.writeLeds(LED_3, ON);
+              break;
   
-              case LED_3_ON:
-                MFS.writeLeds(LED_3, OFF);
-                ledModeValue = LED_4_ON;
-                MFS.writeLeds(LED_4, ON);
-                break;
+            case LED_3_ON:
+              MFS.writeLeds(LED_3, OFF);
+              ledModeValue = LED_4_ON;
+              MFS.writeLeds(LED_4, ON);
+              break;
               
-              case LED_4_ON:
-                MFS.writeLeds(LED_4, OFF);
-                ledModeValue = LED_1_ON;
-                MFS.writeLeds(LED_1, ON);
-                break;
-            }
+            case LED_4_ON:
+              MFS.writeLeds(LED_4, OFF);
+              ledModeValue = LED_1_ON;
+              MFS.writeLeds(LED_1, ON);
+              break;
+          }
             
-           }
+        }
+
         break;
 
       case SETTING_RANGE_MAX_NUM_STARTED:
