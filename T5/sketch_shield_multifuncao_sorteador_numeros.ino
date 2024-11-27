@@ -103,32 +103,43 @@ void loop() {
 
           for(int i = 0; i < 9; i++){
             switch(AnimationModeValue){
+              AnimationModeValue = ANIMATION_STAGE1;
+
               case ANIMATION_STAGE1:
                 u = numero % 10;
-                for(int i =0;i<u;i++){
+                for(int i = 0;i < u;i++){
                   MFS.write(i); 
                 }
+
+                AnimationModeValue = ANIMATION_STAGE2;
                 break;
                 
               case ANIMATION_STAGE2:
-                d = (numero/10) % 10;
-                for(int i =0;i<d;i++){
+                d = (numero / 10) % 10;
+                for(int i = 0;i < d;i++){
                   MFS.write(i); 
                 }
+
+                AnimationModeValue = ANIMATION_STAGE3;
                 break;
                 
               case ANIMATION_STAGE3:
-                c = (numero/100) % 10;
-                for(int i =0;i<c;i++){
+                c = (numero / 100) % 10;
+                for(int i = 0;i < c;i++){
                   MFS.write(i); 
                 }
+
+                AnimationModeValue = ANIMATION_STAGE4;
                 break;
               
               case ANIMATION_STAGE4:
-                m = (numero/1000) % 10;
-                for(int i =0;i<m;i++){
+                m = (numero / 1000) % 10;
+                for(int i = 0;i < m;i++){
                   MFS.write(i); 
                 }
+
+                //implementar o interrupt
+                AnimationModeValue = ANIMATION_INTERRUPTED;
                 break;
             
             }
